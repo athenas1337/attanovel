@@ -1,0 +1,135 @@
+/* src/components/auth/AuthModal.css */
+.auth-modal {
+  max-width: 440px;
+}
+
+.auth-modal__header {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.auth-modal__icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--gradient-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-md);
+  color: #1a0a00;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+}
+
+.auth-modal__header h2 {
+  font-size: 1.4rem;
+  margin-bottom: var(--space-xs);
+}
+
+.auth-modal__header p {
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+/* Google Button */
+.auth-modal__google {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: 11px;
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  margin-bottom: var(--space-md);
+}
+
+.auth-modal__google:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.2);
+}
+
+/* Divider */
+.auth-modal__divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+}
+
+.auth-modal__divider::before,
+.auth-modal__divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-border);
+}
+
+/* Form */
+.auth-modal__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.auth-modal__input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-modal__input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.auth-modal__input-wrap .form-input {
+  padding-left: 40px;
+}
+
+.auth-modal__toggle-pass {
+  position: absolute;
+  right: 14px;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color var(--transition-fast);
+}
+
+.auth-modal__toggle-pass:hover {
+  color: var(--color-primary-light);
+}
+
+/* Switch mode */
+.auth-modal__switch {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+.auth-modal__switch button {
+  color: var(--color-primary-light);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  transition: color var(--transition-fast);
+}
+
+.auth-modal__switch button:hover {
+  color: var(--color-gold);
+}

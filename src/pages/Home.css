@@ -1,0 +1,326 @@
+/* src/pages/Home.css */
+
+/* ===================== HERO ===================== */
+.home__hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  padding: 100px 0 60px;
+}
+
+.home__hero-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.home__hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.25;
+}
+
+.home__hero-orb--1 {
+  width: 600px;
+  height: 600px;
+  background: #6d28d9;
+  top: -200px;
+  right: -100px;
+  animation: orbitDrift 20s ease-in-out infinite;
+}
+
+.home__hero-orb--2 {
+  width: 400px;
+  height: 400px;
+  background: #1e3a8a;
+  bottom: -100px;
+  left: -100px;
+  animation: orbitDrift 25s ease-in-out infinite reverse;
+}
+
+.home__hero-orb--3 {
+  width: 300px;
+  height: 300px;
+  background: #f59e0b;
+  top: 40%;
+  left: 40%;
+  opacity: 0.1;
+  animation: orbitDrift 30s ease-in-out infinite;
+}
+
+.home__hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 700px;
+}
+
+.home__hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 16px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-full);
+  color: var(--color-gold);
+  font-size: 0.8rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.04em;
+  margin-bottom: var(--space-lg);
+}
+
+.home__hero-title {
+  font-size: clamp(2.5rem, 6vw, 5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  margin-bottom: var(--space-lg);
+  letter-spacing: -0.02em;
+}
+
+.home__hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--color-text-2);
+  line-height: 1.8;
+  max-width: 560px;
+  margin-bottom: var(--space-xl);
+}
+
+.home__hero-actions {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-2xl);
+}
+
+.home__hero-stats {
+  display: flex;
+  gap: var(--space-xl);
+}
+
+.home__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home__stat strong {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-gold);
+}
+
+.home__stat span {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+}
+
+/* Floating decorations */
+.home__floating-books {
+  position: absolute;
+  right: 5%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  z-index: 1;
+}
+
+.home__floating-book {
+  font-size: 3rem;
+  filter: drop-shadow(0 4px 20px rgba(139, 92, 246, 0.5));
+}
+
+@media (max-width: 900px) {
+  .home__floating-books { display: none; }
+}
+
+/* ===================== SECTION HEADER ===================== */
+.home__section-header {
+  text-align: center;
+  margin-bottom: var(--space-xl);
+}
+
+.home__section-icon {
+  color: var(--color-gold);
+  margin-bottom: var(--space-sm);
+}
+
+/* ===================== FEATURES ===================== */
+.home__features {
+  padding: var(--space-3xl) 0;
+  position: relative;
+  z-index: 1;
+}
+
+.home__features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-lg);
+}
+
+.home__feature-card {
+  padding: var(--space-xl);
+  transition: all var(--transition-normal);
+}
+
+.home__feature-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--color-border-bright);
+  box-shadow: var(--shadow-glow);
+}
+
+.home__feature-icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--space-md);
+  display: block;
+}
+
+.home__feature-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: var(--space-sm);
+  color: var(--color-text);
+}
+
+.home__feature-card p {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}
+
+/* ===================== NOVELS ===================== */
+.home__novels {
+  padding: var(--space-3xl) 0;
+  position: relative;
+  z-index: 1;
+}
+
+.home__genre-filter {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-xl);
+}
+
+.home__genre-btn {
+  padding: 7px 18px;
+  border-radius: var(--radius-full);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition-normal);
+}
+
+.home__genre-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary-light);
+}
+
+.home__genre-btn.active {
+  background: var(--gradient-violet);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 4px 12px rgba(109, 40, 217, 0.4);
+}
+
+.home__novels-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: var(--space-lg);
+}
+
+.home__loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-3xl) 0;
+  color: var(--color-text-muted);
+}
+
+.home__empty {
+  text-align: center;
+  padding: var(--space-3xl) 0;
+  color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.home__empty span {
+  font-size: 4rem;
+}
+
+.home__empty h3 {
+  font-size: 1.3rem;
+  color: var(--color-text-2);
+}
+
+.home__view-all {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-xl);
+}
+
+/* ===================== CTA ===================== */
+.home__cta {
+  padding: var(--space-3xl) 0 var(--space-2xl);
+  position: relative;
+  z-index: 1;
+}
+
+.home__cta-card {
+  text-align: center;
+  padding: var(--space-2xl);
+  position: relative;
+  overflow: hidden;
+}
+
+.home__cta-orb {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.2), transparent);
+  border-radius: 50%;
+  top: -100px;
+  right: -50px;
+  pointer-events: none;
+}
+
+.home__cta-icon {
+  color: var(--color-gold);
+  margin-bottom: var(--space-lg);
+  filter: drop-shadow(0 0 20px rgba(245,158,11,0.5));
+  animation: float 3s ease-in-out infinite;
+}
+
+.home__cta-card h2 {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  margin-bottom: var(--space-md);
+}
+
+.home__cta-card p {
+  color: var(--color-text-muted);
+  font-size: 1rem;
+  margin-bottom: var(--space-xl);
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.home__cta-creator {
+  color: var(--color-gold);
+}
+
+@media (max-width: 480px) {
+  .home__hero-actions { flex-direction: column; }
+  .home__hero-stats { flex-direction: column; gap: var(--space-md); }
+  .home__novels-grid { grid-template-columns: repeat(2, 1fr); }
+}
