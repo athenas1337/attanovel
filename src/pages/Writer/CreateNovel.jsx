@@ -27,6 +27,7 @@ const CreateNovel = () => {
     genres: [],
     tags: [],
     status: 'draft',
+    coverUrl: '',
   });
   const coverInputRef = useRef(null);
 
@@ -81,20 +82,27 @@ const CreateNovel = () => {
     if (form.genres.length === 0) { toast.error('Genre harus dipilih (minimal 1)'); return; }
     setLoading(true);
     try {
-      const { genres, ...submitForm } = form;
+      const { genres, coverUrl, ...submitForm } = form;
+      let finalCover = coverUrl || '';
+
       // Create novel first to get ID
       const novelId = await createNovel({
         ...submitForm,
         genre: genres.join(', '),
         authorName: userProfile?.displayName || user.displayName || 'Anonim',
-        cover: '',
+        cover: finalCover,
       }, user.uid);
 
-      // Upload cover if exists
+      // Upload cover if exists and storage is accessible
       if (coverFile) {
-        const coverUrl = await uploadCover(coverFile, novelId);
-        const { updateNovel } = await import('../../firebase/novels');
-        await updateNovel(novelId, { cover: coverUrl });
+        try {
+          const uploadedUrl = await uploadCover(coverFile, novelId);
+          const { updateNovel } = await import('../../firebase/novels');
+          await updateNovel(novelId, { cover: uploadedUrl });
+        } catch (storageErr) {
+          console.warn("Storage upload failed, using coverUrl fallback if any", storageErr);
+          toast.error("Gagal mengunggah file sampul (Upgrade Firebase Storage diperlukan).");
+        }
       }
 
       toast.success('Novel berhasil dibuat! 🎉');
@@ -156,12 +164,32 @@ const CreateNovel = () => {
                 <button
                   type="button"
                   className="btn btn-danger btn-sm"
-                  onClick={() => { setCoverPreview(null); setCoverFile(null); }}
+                  onClick={() => {
+                    setCoverPreview(null);
+                    setCoverFile(null);
+                    setForm(f => ({ ...f, coverUrl: '' }));
+                  }}
                   style={{ width: '100%', marginTop: 8 }}
                 >
                   <X size={14} /> Hapus Sampul
                 </button>
               )}
+
+              <div className="form-group" style={{ marginTop: '16px' }}>
+                <label className="form-label" style={{ fontSize: '0.75rem' }}>Atau gunakan URL Gambar:</label>
+                <input
+                  type="text"
+                  name="coverUrl"
+                  className="form-input"
+                  placeholder="https://contoh.com/gambar.jpg"
+                  value={form.coverUrl}
+                  onChange={(e) => {
+                    setForm(f => ({ ...f, coverUrl: e.target.value }));
+                    setCoverPreview(e.target.value);
+                  }}
+                  style={{ padding: '8px 12px', fontSize: '0.85rem' }}
+                />
+              </div>
             </div>
 
             {/* Form Fields */}

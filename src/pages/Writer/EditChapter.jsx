@@ -130,9 +130,18 @@ const EditChapter = () => {
       toast.success('Gambar berhasil dimasukkan!');
     } catch (e) {
       toast.dismiss(loadingToast);
-      toast.error('Gagal mengupload gambar.');
+      toast.error('Gagal mengupload gambar (Upgrade Firebase Storage diperlukan).');
     }
     e.target.value = '';
+  };
+
+  const handleImageUrlInsert = () => {
+    const url = window.prompt("Masukkan URL Gambar (Contoh: https://link-gambar.com/gambar.jpg):");
+    if (!url) return;
+    const img = `<figure style="text-align:center;margin:2em 0;"><img src="${url}" alt="Gambar cerita" style="max-width:100%;border-radius:8px;"/><figcaption style="color:#7c6fa0;font-size:0.85em;margin-top:0.5em;">Gambar Cerita</figcaption></figure>`;
+    editorRef.current?.focus();
+    document.execCommand('insertHTML', false, img);
+    toast.success('Gambar berhasil dimasukkan!');
   };
 
   if (loading) return (
@@ -238,9 +247,17 @@ const EditChapter = () => {
           <button
             className="edit-chapter__tool edit-chapter__tool--image"
             onClick={() => imageInputRef.current?.click()}
-            title="Sisipkan Gambar"
+            title="Sisipkan File Gambar"
           >
-            <Image size={15} /> Sisipkan Gambar
+            <Image size={15} /> Sisipkan File
+          </button>
+          <button
+            className="edit-chapter__tool edit-chapter__tool--image"
+            onClick={handleImageUrlInsert}
+            title="Sisipkan URL Gambar (Gratis)"
+            style={{ marginLeft: '4px', background: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.2)', color: 'var(--color-gold)' }}
+          >
+            <Image size={15} /> Sisipkan URL Gambar
           </button>
           <input
             ref={imageInputRef}
