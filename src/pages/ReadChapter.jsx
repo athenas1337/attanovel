@@ -39,9 +39,28 @@ const ReadChapter = ({ onOpenAuth }) => {
           getNovel(novelId),
           getChapters(novelId)
         ]);
+
+        const isAuthor = n && user && n.authorId === user.uid;
+
+        // Block if novel is draft and visitor is not the author
+        if (n && n.status === 'draft' && !isAuthor) {
+          toast.error('Novel ini masih berupa draft.');
+          navigate('/');
+          return;
+        }
+
         setNovel(n);
-        setChapters(chs);
+        setChapters(isAuthor ? chs : chs.filter(ch => ch.status === 'published'));
+        
         const ch = chs.find(c => c.id === chapterId);
+        
+        // Block if chapter is draft and visitor is not the author
+        if (ch && ch.status === 'draft' && !isAuthor) {
+          toast.error('Bab ini masih berupa draft dan belum diterbitkan.');
+          navigate(`/novel/${novelId}`);
+          return;
+        }
+
         setChapter(ch || null);
         // Load comments
         const cmts = await getComments(novelId, chapterId);
@@ -53,7 +72,7 @@ const ReadChapter = ({ onOpenAuth }) => {
       }
     };
     load();
-  }, [novelId, chapterId]);
+  }, [novelId, chapterId, user]);
 
   useEffect(() => {
     if (contentRef.current) window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -102,6 +121,7 @@ const ReadChapter = ({ onOpenAuth }) => {
       await addReply(novelId, chapterId, commentId, {
         userId: user.uid,
         userName: userProfile?.displayName || user.displayName || 'Pengguna',
+        userAvatar: userProfile?.avatar || '',
         text: replyText.trim(),
       });
       setReplyingTo(null);
@@ -232,8 +252,16 @@ const ReadChapter = ({ onOpenAuth }) => {
             {/* Comment Input */}
             <form onSubmit={handleSendComment} className="read__comment-form">
               <div className="read__comment-input-wrap">
-                <div className="read__comment-avatar">
-                  {user ? <User size={14} /> : '?'}
+                <div className="read__comment-avatar" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {user ? (
+                    userProfile?.avatar ? (
+                      <img src={userProfile.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <User size={14} />
+                    )
+                  ) : (
+                    '?'
+                  )}
                 </div>
                 <input
                   type="text"
@@ -265,8 +293,12 @@ const ReadChapter = ({ onOpenAuth }) => {
                 comments.map(comment => (
                   <div key={comment.id} className="read__comment">
                     <div className="read__comment-header">
-                      <div className="read__comment-avatar">
-                        <User size={12} />
+                      <div className="read__comment-avatar" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        {comment.userAvatar ? (
+                          <img src={comment.userAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <User size={12} />
+                        )}
                       </div>
                       <div className="read__comment-meta">
                         <strong>{comment.userName}</strong>
@@ -288,8 +320,12 @@ const ReadChapter = ({ onOpenAuth }) => {
                       <div className="read__replies">
                         {comment.replies.map(r => (
                           <div key={r.id} className="read__reply">
-                            <div className="read__comment-avatar sm">
-                              <User size={10} />
+                            <div className="read__comment-avatar sm" style={{ overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              {r.userAvatar ? (
+                                <img src={r.userAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                              ) : (
+                                <User size={10} />
+                              )}
                             </div>
                             <div>
                               <strong>{r.userName}</strong>

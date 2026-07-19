@@ -28,8 +28,17 @@ const NovelDetail = ({ onOpenAuth }) => {
           getNovel(novelId),
           getChapters(novelId)
         ]);
+        const isAuthor = n && user && n.authorId === user.uid;
+
+        // Block if novel is draft and visitor is not the author
+        if (n && n.status === 'draft' && !isAuthor) {
+          toast.error('Novel ini masih berupa draft.');
+          navigate('/');
+          return;
+        }
+
         setNovel(n);
-        setChapters(chs);
+        setChapters(isAuthor ? chs : chs.filter(ch => ch.status === 'published'));
         
         if (n) {
           const viewed = sessionStorage.getItem(`viewed_${novelId}`);
@@ -52,7 +61,7 @@ const NovelDetail = ({ onOpenAuth }) => {
       }
     };
     load();
-  }, [novelId, userProfile]);
+  }, [novelId, userProfile, user]);
 
   const handleLike = async () => {
     if (!user) { onOpenAuth('login'); return; }
