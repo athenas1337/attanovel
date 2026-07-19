@@ -12,7 +12,8 @@ const GENRES = [
   'Slice of Life', 'Game', 'Psychological', 'School Life',
   'Harem', 'Reverse Harem', 'Cultivation', 'Supernatural',
   'System', 'Mecha', 'Tragedy', 'Magic', 'Reincarnation',
-  'Kingdom Building', 'Leveling', 'Overpowered', 'Dark Fantasy'
+  'Kingdom Building', 'Leveling', 'Overpowered', 'Dark Fantasy',
+  'LitRPG', 'Xuanhuan', 'Josei', 'Seinen', 'Shounen'
 ];
 
 const SORT_OPTIONS = [

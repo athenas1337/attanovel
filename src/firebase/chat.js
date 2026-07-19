@@ -1,7 +1,7 @@
 import { db } from './config';
 import {
   collection, doc, query, getDocs, addDoc, updateDoc,
-  serverTimestamp, where
+  serverTimestamp, where, deleteDoc, writeBatch
 } from 'firebase/firestore';
 
 // Get or Create a chat between two users
@@ -39,6 +39,29 @@ export const sendChatMessage = async (chatId, senderId, text) => {
   
   await updateDoc(chatRef, {
     lastMessage: text,
+    updatedAt: serverTimestamp()
+  });
+};
+
+// Delete a specific message
+export const deleteChatMessage = async (chatId, messageId) => {
+  await deleteDoc(doc(db, 'chats', chatId, 'messages', messageId));
+};
+
+// Clear all messages in a chat room
+export const clearChatMessages = async (chatId) => {
+  const messagesRef = collection(db, 'chats', chatId, 'messages');
+  const snap = await getDocs(messagesRef);
+  const batch = writeBatch(db);
+  snap.docs.forEach(d => {
+    batch.delete(d.ref);
+  });
+  await batch.commit();
+
+  // Reset lastMessage
+  const chatRef = doc(db, 'chats', chatId);
+  await updateDoc(chatRef, {
+    lastMessage: 'Pesan telah dihapus',
     updatedAt: serverTimestamp()
   });
 };

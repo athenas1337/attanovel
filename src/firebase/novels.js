@@ -23,6 +23,7 @@ export const createNovel = async (novelData, authorId) => {
     likes: 0,
     bookmarks: 0,
     status: 'draft',
+    writingStatus: 'Ongoing',
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -135,10 +136,11 @@ export const getNovelsByIds = async (novelIds) => {
 export const getLeaderboardNovels = async (sortByField = 'views', limitNum = 20) => {
   const q = query(
     collection(db, 'novels'),
-    where('status', '==', 'published'),
-    orderBy(sortByField, 'desc'),
-    limit(limitNum)
+    where('status', '==', 'published')
   );
   const snap = await getDocs(q);
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  return all
+    .sort((a, b) => (b[sortByField] || 0) - (a[sortByField] || 0))
+    .slice(0, limitNum);
 };

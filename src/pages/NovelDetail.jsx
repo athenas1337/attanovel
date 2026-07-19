@@ -287,8 +287,16 @@ const NovelDetail = ({ onOpenAuth }) => {
             <dl className="novel-detail__dl">
               <dt>Genre</dt>
               <dd>{novel.genre || '-'}</dd>
-              <dt>Status</dt>
-              <dd>{novel.status === 'published' ? 'Tamat/On-going' : 'Draft'}</dd>
+              <dt>Status Karya</dt>
+              <dd>
+                {novel.writingStatus === 'Completed' && '✅ Tamat'}
+                {novel.writingStatus === 'Hiatus' && '💤 Hiatus'}
+                {novel.writingStatus === 'Dropped' && '❌ Dropped'}
+                {novel.writingStatus === 'Planning' && '📅 Rencana'}
+                {(!novel.writingStatus || novel.writingStatus === 'Ongoing') && '✍️ Ongoing'}
+              </dd>
+              <dt>Visibilitas</dt>
+              <dd>{novel.status === 'published' ? '🌍 Diterbitkan' : '🔒 Draft'}</dd>
               <dt>Jumlah Bab</dt>
               <dd>{chapters.length}</dd>
               <dt>Total Tampilan</dt>

@@ -1,8 +1,8 @@
 // src/pages/Social.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Search, MessageSquare, UserMinus, UserPlus, User } from 'lucide-react';
-import { getAllUsers, toggleFollow } from '../firebase/social';
+import { Users, Search, MessageSquare, UserMinus, UserPlus, User, Heart } from 'lucide-react';
+import { getAllUsers, toggleFollow, toggleUserLike } from '../firebase/social';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import toast from 'react-hot-toast';
@@ -57,6 +57,22 @@ const Social = () => {
     } catch (e) {
       console.error(e);
       toast.error('Gagal memproses follow.');
+    }
+  };
+
+  const handleLikeToggle = async (targetUser) => {
+    if (!user) {
+      toast.error('Silakan masuk untuk menyukai profil.');
+      return;
+    }
+    const isLiked = targetUser.likedBy?.includes(user.uid) || false;
+    try {
+      await toggleUserLike(user.uid, targetUser.uid, isLiked);
+      await load();
+      toast.success(isLiked ? 'Batal menyukai profil' : 'Menyukai profil! ❤️');
+    } catch (e) {
+      console.error(e);
+      toast.error('Gagal memproses likes.');
     }
   };
 
@@ -119,6 +135,27 @@ const Social = () => {
 
               return (
                 <div key={u.uid} className="social__card glass-card animate-fadeIn">
+                  {/* Like Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleLikeToggle(u)}
+                    style={{
+                      position: 'absolute',
+                      top: '16px',
+                      right: '16px',
+                      background: 'none',
+                      border: 'none',
+                      color: u.likedBy?.includes(user?.uid) ? '#f43f5e' : 'var(--color-text-faint)',
+                      cursor: 'pointer',
+                      transition: 'transform 0.2s ease',
+                      display: 'flex',
+                      padding: 0
+                    }}
+                    title={u.likedBy?.includes(user?.uid) ? 'Batal menyukai profil' : 'Sukai profil'}
+                  >
+                    <Heart size={18} fill={u.likedBy?.includes(user?.uid) ? 'currentColor' : 'none'} />
+                  </button>
+
                   <div className="social__card-avatar">
                     {u.avatar ? (
                       <img src={u.avatar} alt={u.displayName} />

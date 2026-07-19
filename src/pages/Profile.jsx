@@ -1,10 +1,11 @@
 // src/pages/Profile.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { User, BookOpen, Eye, Heart, Calendar, Edit3, Crown } from 'lucide-react';
+import { User, BookOpen, Eye, Heart, Calendar, Edit3, Crown, MessageSquare, UserPlus, UserMinus } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { getNovelsByAuthor } from '../firebase/novels';
+import { toggleFollow, toggleUserLike } from '../firebase/social';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import './Profile.css';
@@ -106,6 +107,46 @@ const Profile = () => {
       toast.error('Gagal menyimpan profil.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleFollow = async () => {
+    if (!user) { toast.error('Silakan masuk untuk mengikuti.'); return; }
+    const isFollowing = userProfile?.following?.includes(targetId) || false;
+    try {
+      await toggleFollow(user.uid, targetId, isFollowing);
+      if (userProfile) {
+        if (isFollowing) {
+          userProfile.following = (userProfile.following || []).filter(id => id !== targetId);
+          profile.followers = (profile.followers || []).filter(id => id !== user.uid);
+        } else {
+          userProfile.following = [...(userProfile.following || []), targetId];
+          profile.followers = [...(profile.followers || []), user.uid];
+        }
+      }
+      setProfile({ ...profile });
+      toast.success(isFollowing ? 'Batal mengikuti' : 'Mengikuti!');
+    } catch (e) {
+      console.error(e);
+      toast.error('Gagal memproses follow.');
+    }
+  };
+
+  const handleLikeProfile = async () => {
+    if (!user) { toast.error('Silakan masuk untuk menyukai.'); return; }
+    const isLiked = profile.likedBy?.includes(user.uid) || false;
+    try {
+      await toggleUserLike(user.uid, targetId, isLiked);
+      if (isLiked) {
+        profile.likedBy = (profile.likedBy || []).filter(id => id !== user.uid);
+      } else {
+        profile.likedBy = [...(profile.likedBy || []), user.uid];
+      }
+      setProfile({ ...profile });
+      toast.success(isLiked ? 'Batal menyukai profil' : 'Menyukai profil! ❤️');
+    } catch (e) {
+      console.error(e);
+      toast.error('Gagal memproses likes.');
     }
   };
 
@@ -220,10 +261,34 @@ const Profile = () => {
               <>
                 <h1 className="profile__name">{profile.displayName || 'Pengguna AttaNovel'}</h1>
                 {profile.bio && <p className="profile__bio">{profile.bio}</p>}
-                <div className="profile__joined">
+                <div className="profile__joined" style={{ marginBottom: '16px' }}>
                   <Calendar size={14} />
                   Bergabung sejak {profile.createdAt?.toDate?.()?.toLocaleDateString('id-ID', { year: 'numeric', month: 'long' }) || 'baru-baru ini'}
                 </div>
+                {!isOwn && (
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
+                    <button
+                      onClick={handleFollow}
+                      className={`btn btn-sm ${userProfile?.following?.includes(targetId) ? 'btn-outline' : 'btn-primary'}`}
+                    >
+                      {userProfile?.following?.includes(targetId) ? (
+                        <><UserMinus size={14} /> Unfollow</>
+                      ) : (
+                        <><UserPlus size={14} /> Follow</>
+                      )}
+                    </button>
+                    <button
+                      onClick={handleLikeProfile}
+                      className={`btn btn-sm ${profile.likedBy?.includes(user?.uid) ? 'btn-gold' : 'btn-outline'}`}
+                      style={{ color: profile.likedBy?.includes(user?.uid) ? '#1a0a00' : 'inherit' }}
+                    >
+                      <Heart size={14} fill={profile.likedBy?.includes(user?.uid) ? 'currentColor' : 'none'} /> {profile.likedBy?.includes(user?.uid) ? 'Disukai' : 'Suka Profil'}
+                    </button>
+                    <Link to={`/chat?uid=${targetId}`} className="btn btn-outline btn-sm">
+                      <MessageSquare size={14} /> Kirim Chat
+                    </Link>
+                  </div>
+                )}
               </>
             )}
           </div>

@@ -1,10 +1,10 @@
 // src/pages/Chat.jsx
 import { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Send, User, MessageSquare, ArrowLeft } from 'lucide-react';
+import { Send, User, MessageSquare, ArrowLeft, Trash2 } from 'lucide-react';
 import { collection, query, where, onSnapshot, orderBy, getDoc, doc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { getOrCreateChat, sendChatMessage } from '../firebase/chat';
+import { getOrCreateChat, sendChatMessage, deleteChatMessage, clearChatMessages } from '../firebase/chat';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import toast from 'react-hot-toast';
@@ -117,10 +117,38 @@ const Chat = () => {
     return unsubscribe;
   }, [activeChatId]);
 
-  // Scroll to bottom on new messages
+  // Scroll to bottom on new messages only
+  const prevMessagesLength = useRef(0);
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const currentLength = messages.length;
+    if (currentLength > prevMessagesLength.current || prevMessagesLength.current === 0) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+    prevMessagesLength.current = currentLength;
   }, [messages]);
+
+  const handleDeleteMessage = async (messageId) => {
+    if (!activeChatId) return;
+    try {
+      await deleteChatMessage(activeChatId, messageId);
+      toast.success('Pesan dihapus');
+    } catch (e) {
+      console.error(e);
+      toast.error('Gagal menghapus pesan.');
+    }
+  };
+
+  const handleClearChat = async () => {
+    if (!activeChatId) return;
+    if (!window.confirm('Apakah Anda yakin ingin menghapus seluruh pesan di obrolan ini? Tindakan ini tidak bisa dibatalkan.')) return;
+    try {
+      await clearChatMessages(activeChatId);
+      toast.success('Seluruh obrolan dibersihkan.');
+    } catch (e) {
+      console.error(e);
+      toast.error('Gagal membersihkan obrolan.');
+    }
+  };
 
   const handleSend = async (e) => {
     e.preventDefault();
@@ -196,21 +224,34 @@ const Chat = () => {
           {activeChatId && targetProfile ? (
             <>
               {/* Header */}
-              <div className="chat-page__window-header">
-                <button className="chat-page__back-btn" onClick={() => navigate('/social')}>
-                  <ArrowLeft size={16} />
+              <div className="chat-page__window-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <button className="chat-page__back-btn" onClick={() => navigate('/social')}>
+                    <ArrowLeft size={16} />
+                  </button>
+                  <div className="chat-page__window-avatar">
+                    {targetProfile.avatar ? (
+                      <img src={targetProfile.avatar} alt="" />
+                    ) : (
+                      <User size={18} />
+                    )}
+                  </div>
+                  <div>
+                    <h4>{targetProfile.displayName || 'Pengguna'}</h4>
+                    <p className="chat-page__user-status">Online</p>
+                  </div>
+                </div>
+                {/* Clear Chat Button */}
+                <button
+                  type="button"
+                  className="btn btn-outline btn-sm danger"
+                  onClick={handleClearChat}
+                  title="Hapus Semua Pesan"
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '6px 12px' }}
+                >
+                  <Trash2 size={13} />
+                  <span>Hapus Semua</span>
                 </button>
-                <div className="chat-page__window-avatar">
-                  {targetProfile.avatar ? (
-                    <img src={targetProfile.avatar} alt="" />
-                  ) : (
-                    <User size={18} />
-                  )}
-                </div>
-                <div>
-                  <h4>{targetProfile.displayName || 'Pengguna'}</h4>
-                  <p className="chat-page__user-status">Online</p>
-                </div>
               </div>
 
               {/* Messages Body */}
@@ -220,6 +261,16 @@ const Chat = () => {
                   return (
                     <div key={msg.id} className={`chat-page__msg-bubble ${isOwn ? 'own' : ''}`}>
                       <div className="chat-page__msg-text">{msg.text}</div>
+                      {isOwn && (
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteMessage(msg.id)}
+                          className="chat-page__msg-delete-btn"
+                          title="Hapus pesan"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      )}
                     </div>
                   );
                 })}

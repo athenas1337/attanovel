@@ -282,3 +282,34 @@
     display: block;
   }
 }
+
+.chat-page__msg-bubble {
+  position: relative;
+}
+
+.chat-page__msg-delete-btn {
+  position: absolute;
+  top: 50%;
+  left: -28px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.chat-page__msg-bubble:hover .chat-page__msg-delete-btn {
+  opacity: 1;
+  pointer-events: auto;
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.1);
+}
