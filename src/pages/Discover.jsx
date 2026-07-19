@@ -5,11 +5,20 @@ import { Search, Filter, Eye, Heart, BookOpen } from 'lucide-react';
 import { getPublishedNovels, searchNovels } from '../firebase/novels';
 import './Discover.css';
 
-const GENRES = ['Semua', 'Fantasy', 'Romance', 'Action', 'Mystery', 'Horror', 'Sci-Fi', 'Drama', 'Comedy', 'Thriller'];
+const GENRES = [
+  'Fantasy', 'Romance', 'Action', 'Adventure', 'Mystery', 
+  'Wuxia', 'Xianxia', 'Sci-Fi', 'Urban', 'History', 
+  'Horror', 'Comedy', 'Drama', 'Thriller', 'Isekai', 
+  'Slice of Life', 'Game', 'Psychological', 'School Life',
+  'Harem', 'Reverse Harem', 'Cultivation', 'Supernatural',
+  'System', 'Mecha', 'Tragedy', 'Magic', 'Reincarnation',
+  'Kingdom Building', 'Leveling', 'Overpowered', 'Dark Fantasy'
+];
+
 const SORT_OPTIONS = [
   { label: 'Terbaru', value: 'newest' },
-  { label: 'Terpopuler', value: 'popular' },
-  { label: 'Terbanyak Dibaca', value: 'views' },
+  { label: 'Terpopuler (Likes)', value: 'popular' },
+  { label: 'Terbanyak Dibaca (Views)', value: 'views' },
 ];
 
 const Discover = () => {
@@ -18,7 +27,10 @@ const Discover = () => {
   const [novels, setNovels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchVal, setSearchVal] = useState(searchParams.get('q') || '');
-  const [activeGenre, setActiveGenre] = useState(searchParams.get('genre') || 'Semua');
+  const [selectedGenres, setSelectedGenres] = useState(
+    searchParams.get('genre') ? [searchParams.get('genre')] : []
+  );
+  const [statusFilter, setStatusFilter] = useState('Semua'); // 'Semua' | 'Ongoing' | 'Completed'
   const [sort, setSort] = useState('newest');
 
   useEffect(() => {
@@ -41,8 +53,31 @@ const Discover = () => {
     load();
   }, [searchVal]);
 
+  const handleGenreToggle = (genre) => {
+    setSelectedGenres(prev =>
+      prev.includes(genre)
+        ? prev.filter(g => g !== genre)
+        : [...prev, genre]
+    );
+  };
+
+  const handleResetFilters = () => {
+    setSelectedGenres([]);
+    setStatusFilter('Semua');
+    setSearchVal('');
+    setSort('newest');
+  };
+
   const filtered = novels
-    .filter(n => activeGenre === 'Semua' || n.genre?.toLowerCase().split(', ').map(g => g.trim()).includes(activeGenre.toLowerCase()))
+    .filter(n => {
+      if (selectedGenres.length === 0) return true;
+      const novelGenres = n.genre?.toLowerCase().split(',').map(g => g.trim()) || [];
+      return selectedGenres.some(sg => novelGenres.includes(sg.toLowerCase()));
+    })
+    .filter(n => {
+      if (statusFilter === 'Semua') return true;
+      return n.status?.toLowerCase() === statusFilter.toLowerCase();
+    })
     .sort((a, b) => {
       if (sort === 'popular') return (b.likes || 0) - (a.likes || 0);
       if (sort === 'views') return (b.views || 0) - (a.views || 0);
@@ -60,47 +95,92 @@ const Discover = () => {
           <p className="discover__subtitle">Temukan ribuan cerita menakjubkan dari penulis berbakat</p>
         </div>
 
-        {/* Search & Filter */}
-        <div className="discover__controls">
-          <div className="discover__search-wrap">
-            <Search size={18} className="discover__search-icon" />
-            <input
-              type="text"
-              placeholder="Cari judul novel, penulis, atau genre..."
-              value={searchVal}
-              onChange={e => setSearchVal(e.target.value)}
-              className="discover__search-input"
-            />
-          </div>
-          <select
-            value={sort}
-            onChange={e => setSort(e.target.value)}
-            className="form-input form-select discover__sort"
-          >
-            {SORT_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Genre Filter */}
-        <div className="discover__genres">
-          {GENRES.map(g => (
-            <button
-              key={g}
-              className={`home__genre-btn ${activeGenre === g ? 'active' : ''}`}
-              onClick={() => setActiveGenre(g)}
+        {/* Search & Filter Panel */}
+        <div className="discover__controls-panel glass-card" style={{ padding: '20px', borderRadius: '12px', marginBottom: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div className="discover__controls" style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+            <div className="discover__search-wrap" style={{ flex: 1, minWidth: '250px' }}>
+              <Search size={18} className="discover__search-icon" />
+              <input
+                type="text"
+                placeholder="Cari judul novel, penulis, atau genre..."
+                value={searchVal}
+                onChange={e => setSearchVal(e.target.value)}
+                className="discover__search-input"
+              />
+            </div>
+            
+            {/* Status Filter */}
+            <select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+              className="form-input form-select discover__sort"
+              style={{ minWidth: '150px' }}
             >
-              {g}
+              <option value="Semua">🔍 Semua Status</option>
+              <option value="Ongoing">✍️ Ongoing</option>
+              <option value="Completed">✅ Tamat</option>
+            </select>
+
+            {/* Sort Dropdown */}
+            <select
+              value={sort}
+              onChange={e => setSort(e.target.value)}
+              className="form-input form-select discover__sort"
+              style={{ minWidth: '150px' }}
+            >
+              {SORT_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+
+            <button
+              onClick={handleResetFilters}
+              className="btn btn-outline"
+              style={{ padding: '10px 16px', fontSize: '0.85rem' }}
+            >
+              Reset
             </button>
-          ))}
+          </div>
+
+          {/* Genre Chips Multi-Select */}
+          <div>
+            <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
+              FILTER GENRE (PILIH MULTI-GENRE):
+            </span>
+            <div className="discover__genres" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {GENRES.map(g => {
+                const isActive = selectedGenres.includes(g);
+                return (
+                  <button
+                    key={g}
+                    type="button"
+                    className={`home__genre-btn ${isActive ? 'active' : ''}`}
+                    onClick={() => handleGenreToggle(g)}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '0.8rem',
+                      border: '1px solid',
+                      borderColor: isActive ? 'var(--color-gold)' : 'rgba(255,255,255,0.08)',
+                      background: isActive ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.03)',
+                      color: isActive ? 'var(--color-gold)' : 'var(--color-text-muted)',
+                      borderRadius: '20px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {g}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
         {/* Results info */}
         {!loading && (
           <p className="discover__count">
             Menampilkan <strong>{filtered.length}</strong> novel
-            {activeGenre !== 'Semua' && ` dalam genre ${activeGenre}`}
+            {selectedGenres.length > 0 && ` dalam genre ${selectedGenres.join(', ')}`}
             {searchVal && ` untuk "${searchVal}"`}
           </p>
         )}

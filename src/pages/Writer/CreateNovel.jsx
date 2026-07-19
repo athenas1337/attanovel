@@ -11,7 +11,10 @@ const GENRES = [
   'Fantasy', 'Romance', 'Action', 'Adventure', 'Mystery', 
   'Wuxia', 'Xianxia', 'Sci-Fi', 'Urban', 'History', 
   'Horror', 'Comedy', 'Drama', 'Thriller', 'Isekai', 
-  'Slice of Life', 'Game', 'Psychological', 'School Life'
+  'Slice of Life', 'Game', 'Psychological', 'School Life',
+  'Harem', 'Reverse Harem', 'Cultivation', 'Supernatural',
+  'System', 'Mecha', 'Tragedy', 'Magic', 'Reincarnation',
+  'Kingdom Building', 'Leveling', 'Overpowered', 'Dark Fantasy'
 ];
 
 const CreateNovel = () => {

@@ -1,0 +1,201 @@
+/* src/pages/Leaderboard.css */
+.leaderboard {
+  padding: 90px 0 var(--space-3xl);
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+.leaderboard__header {
+  margin-bottom: var(--space-2xl);
+  padding-top: var(--space-xl);
+}
+
+.leaderboard__trophy {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-md);
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.leaderboard__header h1 {
+  font-size: clamp(1.8rem, 4vw, 2.2rem);
+  margin-bottom: var(--space-xs);
+}
+
+.leaderboard__header p {
+  color: var(--color-text-muted);
+}
+
+/* Tabs */
+.leaderboard__tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xs);
+  padding: 8px;
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.leaderboard__tab {
+  padding: 14px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  transition: all var(--transition-normal);
+}
+
+.leaderboard__tab:hover {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text);
+}
+
+.leaderboard__tab.active {
+  background: var(--gradient-violet);
+  color: white;
+  box-shadow: 0 4px 15px rgba(109, 40, 217, 0.4);
+}
+
+/* List Layout */
+.leaderboard__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.leaderboard__item {
+  display: flex;
+  align-items: center;
+  padding: var(--space-md) var(--space-xl);
+  border-radius: var(--radius-lg);
+  gap: var(--space-lg);
+  text-decoration: none;
+  transition: all var(--transition-normal);
+}
+
+.leaderboard__item:hover {
+  transform: translateX(5px);
+  border-color: var(--color-border-bright);
+  box-shadow: var(--shadow-glow);
+}
+
+/* Rank Badges */
+.leaderboard__rank-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--color-text-muted);
+  flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.rank-1 .leaderboard__rank-badge {
+  background: var(--gradient-gold);
+  color: #1a0a00;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.5);
+  border-color: transparent;
+}
+
+.rank-2 .leaderboard__rank-badge {
+  background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+  color: #0f172a;
+  box-shadow: 0 0 15px rgba(226, 232, 240, 0.4);
+  border-color: transparent;
+}
+
+.rank-3 .leaderboard__rank-badge {
+  background: linear-gradient(135deg, #b45309, #d97706);
+  color: white;
+  box-shadow: 0 0 15px rgba(180, 83, 9, 0.4);
+  border-color: transparent;
+}
+
+/* Cover Image */
+.leaderboard__cover-container {
+  width: 50px;
+  height: 75px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: rgba(255,255,255,0.05);
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+}
+
+.leaderboard__cover {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.leaderboard__cover-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+/* Info */
+.leaderboard__info {
+  flex: 1;
+}
+
+.leaderboard__novel-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 2px;
+}
+
+.leaderboard__novel-author {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-xs);
+}
+
+/* Stats */
+.leaderboard__stats {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.leaderboard__stat-val {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.leaderboard__stat-val.text-red { color: #f43f5e; }
+.leaderboard__stat-val.text-gold { color: var(--color-gold); }
+
+.leaderboard__empty {
+  padding: var(--space-3xl) var(--space-xl);
+  text-align: center;
+  color: var(--color-text-muted);
+}
+
+.leaderboard__empty span { font-size: 4rem; display: block; margin-bottom: var(--space-md); }
+
+@media (max-width: 600px) {
+  .leaderboard__tabs { grid-template-columns: 1fr; }
+  .leaderboard__item { padding: var(--space-md); gap: var(--space-md); }
+  .leaderboard__novel-title { font-size: 1rem; }
+}

@@ -108,6 +108,34 @@ const NovelManager = () => {
     }
   };
 
+  const handleMoveChapter = async (index, direction) => {
+    if (direction === 'up' && index === 0) return;
+    if (direction === 'down' && index === chapters.length - 1) return;
+
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    const newChapters = [...chapters];
+    
+    // Swap positions
+    const temp = newChapters[index];
+    newChapters[index] = newChapters[newIndex];
+    newChapters[newIndex] = temp;
+
+    // Set locally first
+    setChapters(newChapters);
+
+    try {
+      await Promise.all(
+        newChapters.map((ch, idx) =>
+          updateChapter(novelId, ch.id, { order: idx + 1 })
+        )
+      );
+      toast.success('Urutan bab disimpan! ↕️');
+    } catch (e) {
+      console.error(e);
+      toast.error('Gagal menyimpan urutan bab.');
+    }
+  };
+
   if (loading) return (
     <div className="home__loading" style={{ minHeight: '80vh' }}>
       <div className="spinner spinner-lg" />
@@ -196,6 +224,26 @@ const NovelManager = () => {
                     </span>
                   </div>
                   <div className="novel-manager__chapter-actions">
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => handleMoveChapter(idx, 'up')}
+                      disabled={idx === 0}
+                      title="Pindahkan ke atas"
+                      style={{ padding: '6px' }}
+                    >
+                      <ArrowUp size={13} />
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => handleMoveChapter(idx, 'down')}
+                      disabled={idx === chapters.length - 1}
+                      title="Pindahkan ke bawah"
+                      style={{ padding: '6px' }}
+                    >
+                      <ArrowDown size={13} />
+                    </button>
                     <button
                       className={`btn btn-sm ${ch.status === 'published' ? 'btn-ghost' : 'btn-outline'}`}
                       onClick={() => handleToggleChapterStatus(ch)}

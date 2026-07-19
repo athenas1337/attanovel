@@ -130,3 +130,15 @@ export const getNovelsByIds = async (novelIds) => {
   const snap = await getDocs(q);
   return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
+
+// Fetch leaderboard rankings (by views, likes, or bookmarks)
+export const getLeaderboardNovels = async (sortByField = 'views', limitNum = 20) => {
+  const q = query(
+    collection(db, 'novels'),
+    where('status', '==', 'published'),
+    orderBy(sortByField, 'desc'),
+    limit(limitNum)
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};

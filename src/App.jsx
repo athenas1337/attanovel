@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { LanguageProvider } from './context/LanguageContext';
 
 // Layout
 import Navbar from './components/layout/Navbar';
@@ -19,6 +20,10 @@ import NovelDetail from './pages/NovelDetail';
 import ReadChapter from './pages/ReadChapter';
 import Profile from './pages/Profile';
 import Library from './pages/Library';
+import Leaderboard from './pages/Leaderboard';
+import Settings from './pages/Settings';
+import Social from './pages/Social';
+import Chat from './pages/Chat';
 
 // Writer Pages
 import Dashboard from './pages/Writer/Dashboard';
@@ -82,6 +87,30 @@ function AppRoutes() {
         <Route path="/library" element={
           <WithLayout onOpenAuth={openAuth}>
             <Library />
+          </WithLayout>
+        } />
+        <Route path="/leaderboard" element={
+          <WithLayout onOpenAuth={openAuth}>
+            <Leaderboard />
+          </WithLayout>
+        } />
+        <Route path="/settings" element={
+          <WithLayout onOpenAuth={openAuth}>
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          </WithLayout>
+        } />
+        <Route path="/social" element={
+          <WithLayout onOpenAuth={openAuth}>
+            <Social />
+          </WithLayout>
+        } />
+        <Route path="/chat" element={
+          <WithLayout onOpenAuth={openAuth}>
+            <ProtectedRoute>
+              <Chat />
+            </ProtectedRoute>
           </WithLayout>
         } />
         <Route path="/profile" element={
@@ -165,7 +194,9 @@ function App() {
   return (
     <BrowserRouter basename="/attanovel">
       <AuthProvider>
-        <AppRoutes />
+        <LanguageProvider>
+          <AppRoutes />
+        </LanguageProvider>
       </AuthProvider>
     </BrowserRouter>
   );

@@ -16,6 +16,7 @@ const Dashboard = () => {
   const [novels, setNovels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState(null);
+  const [chartTab, setChartTab] = useState('views');
 
   useEffect(() => {
     if (!user) { navigate('/'); return; }
@@ -95,6 +96,74 @@ const Dashboard = () => {
             </div>
           ))}
         </div>
+
+        {/* Performance Chart & Tips Section */}
+        {!loading && novels.length > 0 && (
+          <div className="dashboard__insights" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+            {/* Chart */}
+            <div className="dashboard__chart-card glass-card" style={{ padding: '24px', borderRadius: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)' }}>📊 Grafik Performa Novel</h3>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${chartTab === 'views' ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() => setChartTab('views')}
+                    style={{ padding: '4px 12px', fontSize: '0.75rem' }}
+                  >
+                    Views
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-sm ${chartTab === 'likes' ? 'btn-primary' : 'btn-outline'}`}
+                    onClick={() => setChartTab('likes')}
+                    style={{ padding: '4px 12px', fontSize: '0.75rem' }}
+                  >
+                    Likes
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {novels.map(n => {
+                  const maxViews = Math.max(...novels.map(x => x.views || 0), 1);
+                  const maxLikes = Math.max(...novels.map(x => x.likes || 0), 1);
+                  const value = chartTab === 'views' ? (n.views || 0) : (n.likes || 0);
+                  const maxVal = chartTab === 'views' ? maxViews : maxLikes;
+                  const percentage = Math.min(100, Math.round((value / maxVal) * 100));
+
+                  return (
+                    <div key={n.id} style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                        <span style={{ fontWeight: 600 }}>{n.title}</span>
+                        <span style={{ color: 'var(--color-gold)' }}>{value.toLocaleString()}</span>
+                      </div>
+                      <div style={{ width: '100%', height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+                        <div style={{
+                          width: `${percentage}%`,
+                          height: '100%',
+                          background: chartTab === 'views' ? 'var(--gradient-violet)' : 'var(--gradient-gold)',
+                          borderRadius: '4px',
+                          transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)'
+                        }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Premium Tips */}
+            <div className="dashboard__tips-card glass-card" style={{ padding: '24px', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <h3 style={{ fontSize: '1.1rem', color: 'var(--color-gold)' }}>💡 Tips Menulis Premium</h3>
+              <div style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', lineHeight: '1.6', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <p>✍️ <strong>Update Teratur:</strong> Algoritma AttaNovel menyukai novel yang aktif di-update setidaknya 2-3 kali seminggu.</p>
+                <p>🎭 <strong>Pilih Multi-genre:</strong> Kaitkan novel Anda dengan kombinasi genre yang relevan (seperti Fantasy + Cultivation) agar menjangkau audiens lebih luas.</p>
+                <p>🎨 <strong>Sampul Menarik:</strong> Pasang sampul novel visual berkualitas tinggi agar memikat pembaca pada pandangan pertama.</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Novel List */}
         <div className="dashboard__novels-section">

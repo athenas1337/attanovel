@@ -3,7 +3,8 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   BookOpen, PenLine, User, Search, Menu, X,
-  LogOut, ChevronDown, Crown, Compass, Home, Bookmark
+  LogOut, ChevronDown, Crown, Compass, Home, Bookmark,
+  Trophy, Users, Settings, MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { logoutUser } from '../../firebase/auth';
@@ -37,6 +38,8 @@ const Navbar = ({ onOpenAuth }) => {
     { to: '/', label: 'Beranda', icon: <Home size={16} /> },
     { to: '/discover', label: 'Jelajahi', icon: <Compass size={16} /> },
     { to: '/library', label: 'Perpustakaan', icon: <Bookmark size={16} /> },
+    { to: '/leaderboard', label: 'Peringkat', icon: <Trophy size={16} /> },
+    { to: '/social', label: 'Sosial', icon: <Users size={16} /> },
   ];
 
   return (
@@ -103,6 +106,12 @@ const Navbar = ({ onOpenAuth }) => {
                     <Link to="/writer/dashboard" className="navbar__dropdown-item" onClick={() => setProfileOpen(false)}>
                       <BookOpen size={15} /> Novel Saya
                     </Link>
+                    <Link to="/chat" className="navbar__dropdown-item" onClick={() => setProfileOpen(false)}>
+                      <MessageSquare size={15} /> Obrolan Chat
+                    </Link>
+                    <Link to="/settings" className="navbar__dropdown-item" onClick={() => setProfileOpen(false)}>
+                      <Settings size={15} /> Pengaturan
+                    </Link>
                     <div className="navbar__dropdown-divider" />
                     <button className="navbar__dropdown-item danger" onClick={handleLogout}>
                       <LogOut size={15} /> Keluar
@@ -158,6 +167,12 @@ const Navbar = ({ onOpenAuth }) => {
               </Link>
               <Link to="/profile" className="navbar__mobile-link" onClick={() => setMenuOpen(false)}>
                 <User size={16} /> Profil Saya
+              </Link>
+              <Link to="/chat" className="navbar__mobile-link" onClick={() => setMenuOpen(false)}>
+                <MessageSquare size={16} /> Obrolan Chat
+              </Link>
+              <Link to="/settings" className="navbar__mobile-link" onClick={() => setMenuOpen(false)}>
+                <Settings size={16} /> Pengaturan
               </Link>
               <button className="navbar__mobile-link danger" onClick={() => { handleLogout(); setMenuOpen(false); }}>
                 <LogOut size={16} /> Keluar
