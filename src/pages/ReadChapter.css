@@ -204,10 +204,17 @@
 
 .read__content img {
   max-width: 100%;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   display: block;
-  margin: 2em auto;
-  box-shadow: var(--shadow-md);
+  margin: 2.5em auto;
+  border: 1px solid var(--color-border-bright);
+  box-shadow: var(--shadow-glow);
+  transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.read__content img:hover {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-glow), 0 0 15px rgba(245, 158, 11, 0.4);
 }
 
 /* ===================== NAV ===================== */

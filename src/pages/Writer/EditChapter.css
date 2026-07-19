@@ -193,7 +193,19 @@
 .edit-chapter__editor h3 { font-family: var(--font-display); color: var(--color-text-2); margin: 1.5em 0 0.8em; }
 .edit-chapter__editor ul { padding-left: 2em; margin-bottom: 1.5em; }
 .edit-chapter__editor li { margin-bottom: 0.5em; }
-.edit-chapter__editor img { max-width: 100%; border-radius: var(--radius-md); margin: 1.5em auto; display: block; }
+.edit-chapter__editor img {
+  max-width: 100%;
+  border-radius: var(--radius-lg);
+  margin: 2em auto;
+  display: block;
+  border: 1px solid var(--color-border-bright);
+  box-shadow: var(--shadow-glow);
+  transition: transform var(--transition-normal);
+}
+
+.edit-chapter__editor img:hover {
+  transform: scale(1.02);
+}
 .edit-chapter__editor b, .edit-chapter__editor strong { font-weight: 700; color: var(--color-text); }
 .edit-chapter__editor i, .edit-chapter__editor em { font-style: italic; }
 .edit-chapter__editor u { text-decoration: underline; text-decoration-color: var(--color-primary); }
