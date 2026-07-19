@@ -99,12 +99,12 @@ const Home = ({ onOpenAuth }) => {
             </Link>
           </div>
 
-          {/* Stats */}
+          {/* Feature Highlights */}
           <div className="home__hero-stats animate-fadeInUp" style={{ animationDelay: '0.4s' }}>
             {[
-              { label: 'Penulis Aktif', value: '10K+' },
-              { label: 'Novel Diterbitkan', value: '50K+' },
-              { label: 'Pembaca', value: '500K+' },
+              { label: 'Genre Tersedia', value: '37+' },
+              { label: 'Fitur Premium', value: 'Gratis' },
+              { label: 'Baca & Tulis', value: '24/7' },
             ].map(s => (
               <div key={s.label} className="home__stat">
                 <strong>{s.value}</strong>

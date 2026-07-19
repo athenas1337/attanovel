@@ -21,6 +21,7 @@ const Profile = () => {
   const [saving, setSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
   const [avatarFile, setAvatarFile] = useState(null);
+  const [avatarZoomed, setAvatarZoomed] = useState(false);
   const avatarInputRef = useRef(null);
 
   const targetId = userId || user?.uid;
@@ -169,6 +170,7 @@ const Profile = () => {
   );
 
   return (
+    <>
     <div className="profile">
       <div className="profile__banner">
         <div className="profile__banner-bg" />
@@ -176,8 +178,11 @@ const Profile = () => {
         <div className="container profile__banner-inner">
           <div className="profile__avatar-wrap">
             <div
-              className={`profile__avatar ${editMode ? 'profile__avatar--clickable' : ''}`}
-              onClick={() => editMode && avatarInputRef.current?.click()}
+              className={`profile__avatar ${editMode ? 'profile__avatar--clickable' : (profile.avatar || avatarPreview ? 'profile__avatar--clickable' : '')}`}
+              onClick={() => {
+                if (editMode) { avatarInputRef.current?.click(); }
+                else if (profile.avatar || avatarPreview) { setAvatarZoomed(true); }
+              }}
             >
               {avatarPreview
                 ? <img src={avatarPreview} alt="Avatar preview" />
@@ -189,6 +194,14 @@ const Profile = () => {
                 <div className="profile__avatar-overlay">
                   <Edit3 size={16} />
                   <span>Ubah</span>
+                </div>
+              )}
+              {!editMode && (profile.avatar || avatarPreview) && (
+                <div className="profile__avatar-overlay" style={{ opacity: 0, transition: 'opacity 0.2s' }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+                  onMouseLeave={e => e.currentTarget.style.opacity = '0'}
+                >
+                  <span style={{ fontSize: '1.4rem' }}>🔍</span>
                 </div>
               )}
             </div>
@@ -352,6 +365,49 @@ const Profile = () => {
         </div>
       </div>
     </div>
+
+    {/* Avatar Zoom Lightbox */}
+    {avatarZoomed && (
+      <div
+        onClick={() => setAvatarZoomed(false)}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.85)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'zoom-out', backdropFilter: 'blur(8px)',
+          animation: 'fadeIn 0.2s ease',
+        }}
+      >
+        <div style={{ position: 'relative', display: 'inline-block' }}>
+          <img
+            src={avatarPreview || profile.avatar}
+            alt="Avatar besar"
+            style={{
+              maxWidth: '90vw', maxHeight: '85vh',
+              borderRadius: '16px',
+              boxShadow: '0 24px 80px rgba(0,0,0,0.8)',
+              border: '3px solid rgba(255,255,255,0.15)',
+              objectFit: 'cover',
+            }}
+            onClick={e => e.stopPropagation()}
+          />
+          <button
+            onClick={() => setAvatarZoomed(false)}
+            style={{
+              position: 'absolute', top: '-14px', right: '-14px',
+              width: '32px', height: '32px', borderRadius: '50%',
+              background: 'rgba(255,255,255,0.15)',
+              border: '2px solid rgba(255,255,255,0.3)',
+              color: '#fff', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '1rem', fontWeight: 'bold',
+              backdropFilter: 'blur(4px)',
+            }}
+          >✕</button>
+        </div>
+      </div>
+    )}
+  </>
   );
 };
 

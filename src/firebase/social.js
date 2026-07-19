@@ -39,7 +39,8 @@ export const getUserLeaderboardData = async () => {
   const novelsSnap = await getDocs(collection(db, 'novels'));
 
   const users = usersSnap.docs.map(d => ({ uid: d.id, ...d.data() }));
-  const novels = novelsSnap.docs.map(d => d.data());
+  // Only count PUBLISHED novels for the leaderboard
+  const novels = novelsSnap.docs.map(d => d.data()).filter(n => n.status === 'published');
 
   const authorStats = {};
   novels.forEach(n => {

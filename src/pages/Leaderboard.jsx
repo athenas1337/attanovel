@@ -43,14 +43,14 @@ const Leaderboard = () => {
       setLoading(true);
       try {
         const data = await getUserLeaderboardData();
-        // Sort in memory based on selected sub-tab
-        const sorted = [...data].sort((a, b) => {
-          if (userTab === 'followers') return b.followersCount - a.followersCount;
-          if (userTab === 'likedBy') return b.likedByCount - a.likedByCount;
-          if (userTab === 'novelsCount') return b.novelsCount - a.novelsCount;
-          return 0;
-        });
-        setUsers(sorted.slice(0, 20));
+        // Sort in memory based on selected sub-tab, then filter 0-values
+        const sortKey = userTab === 'followers' ? 'followersCount'
+          : userTab === 'likedBy' ? 'likedByCount'
+          : 'novelsCount';
+        const sorted = [...data]
+          .filter(u => (u[sortKey] || 0) > 0)
+          .sort((a, b) => (b[sortKey] || 0) - (a[sortKey] || 0));
+        setUsers(sorted.slice(0, 10));
       } catch (e) {
         console.error(e);
       } finally {

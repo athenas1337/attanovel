@@ -194,31 +194,63 @@ const Discover = () => {
           </div>
         ) : filtered.length > 0 ? (
           <div className="discover__grid">
-            {filtered.map(novel => (
-              <div
-                key={novel.id}
-                className="novel-card"
-                onClick={() => navigate(`/novel/${novel.id}`)}
-              >
-                {novel.cover
-                  ? <img src={novel.cover} alt={novel.title} className="novel-card__cover" />
-                  : <div className="novel-card__cover-placeholder"><span>📖</span></div>
-                }
-                <div className="novel-card__body">
-                  <h3 className="novel-card__title">{novel.title}</h3>
-                  <p className="novel-card__author">oleh {novel.authorName || 'Anonim'}</p>
-                  <div className="novel-card__stats">
-                    <span><Eye size={11} /> {(novel.views || 0).toLocaleString()}</span>
-                    <span><Heart size={11} /> {(novel.likes || 0).toLocaleString()}</span>
-                  </div>
-                  {novel.genre && (
-                    <div style={{ marginTop: 6 }}>
-                      <span className="badge badge-primary">{novel.genre}</span>
+            {filtered.map(novel => {
+              const writingStatus = novel.writingStatus || 'Ongoing';
+              const statusConfig = {
+                'Completed': { label: 'Tamat', color: '#10b981', bg: 'rgba(16,185,129,0.85)' },
+                'Ongoing': { label: 'Ongoing', color: '#fff', bg: 'rgba(109,40,217,0.85)' },
+                'Hiatus': { label: 'Hiatus', color: '#fff', bg: 'rgba(245,158,11,0.85)' },
+                'Dropped': { label: 'Dropped', color: '#fff', bg: 'rgba(239,68,68,0.85)' },
+                'Planning': { label: 'Rencana', color: '#fff', bg: 'rgba(99,102,241,0.85)' },
+              };
+              const sc = statusConfig[writingStatus] || statusConfig['Ongoing'];
+              return (
+                <div
+                  key={novel.id}
+                  className="novel-card"
+                  onClick={() => navigate(`/novel/${novel.id}`)}
+                >
+                  <div style={{ position: 'relative' }}>
+                    {novel.cover
+                      ? <img src={novel.cover} alt={novel.title} className="novel-card__cover" />
+                      : <div className="novel-card__cover-placeholder"><span>📖</span></div>
+                    }
+                    {/* Status badge overlay */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '8px',
+                      left: '8px',
+                      background: sc.bg,
+                      color: sc.color,
+                      fontSize: '0.65rem',
+                      fontWeight: '700',
+                      padding: '3px 8px',
+                      borderRadius: '20px',
+                      backdropFilter: 'blur(4px)',
+                      letterSpacing: '0.04em',
+                      textTransform: 'uppercase',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                      lineHeight: 1.4,
+                    }}>
+                      {sc.label}
                     </div>
-                  )}
+                  </div>
+                  <div className="novel-card__body">
+                    <h3 className="novel-card__title">{novel.title}</h3>
+                    <p className="novel-card__author">oleh {novel.authorName || 'Anonim'}</p>
+                    <div className="novel-card__stats">
+                      <span><Eye size={11} /> {(novel.views || 0).toLocaleString()}</span>
+                      <span><Heart size={11} /> {(novel.likes || 0).toLocaleString()}</span>
+                    </div>
+                    {novel.genre && (
+                      <div style={{ marginTop: 6 }}>
+                        <span className="badge badge-primary">{novel.genre}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div className="home__empty">

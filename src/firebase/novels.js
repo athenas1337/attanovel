@@ -133,7 +133,7 @@ export const getNovelsByIds = async (novelIds) => {
 };
 
 // Fetch leaderboard rankings (by views, likes, or bookmarks)
-export const getLeaderboardNovels = async (sortByField = 'views', limitNum = 20) => {
+export const getLeaderboardNovels = async (sortByField = 'views', limitNum = 10) => {
   const q = query(
     collection(db, 'novels'),
     where('status', '==', 'published')
@@ -141,6 +141,8 @@ export const getLeaderboardNovels = async (sortByField = 'views', limitNum = 20)
   const snap = await getDocs(q);
   const all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
   return all
+    // Only include novels that have at least 1 for the ranked field
+    .filter(n => (n[sortByField] || 0) > 0)
     .sort((a, b) => (b[sortByField] || 0) - (a[sortByField] || 0))
     .slice(0, limitNum);
 };
