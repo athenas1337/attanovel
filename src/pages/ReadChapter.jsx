@@ -23,7 +23,8 @@ const ReadChapter = ({ onOpenAuth }) => {
   const [loading, setLoading] = useState(true);
   const [showToc, setShowToc] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [darkMode, setDarkMode] = useState(true);
+  const [theme, setTheme] = useState('dark');
+  const [fontFamily, setFontFamily] = useState('serif');
   const [fontSize, setFontSize] = useState(18);
   const [newComment, setNewComment] = useState('');
   const [sendingComment, setSendingComment] = useState(false);
@@ -156,7 +157,7 @@ const ReadChapter = ({ onOpenAuth }) => {
   );
 
   return (
-    <div className={`read ${darkMode ? 'read--dark' : 'read--light'}`}>
+    <div className={`read read--${theme} read--font-${fontFamily}`}>
       {/* ===================== TOP BAR ===================== */}
       <div className="read__topbar">
         <div className="read__topbar-left">
@@ -170,17 +171,47 @@ const ReadChapter = ({ onOpenAuth }) => {
             <span>Bab {currentIdx + 1}: {chapter.title}</span>
           </button>
         </div>
-        <div className="read__topbar-right">
-          <button className="read__tool-btn" onClick={() => setFontSize(f => Math.max(14, f - 1))}>
+        <div className="read__topbar-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button className="read__tool-btn" onClick={() => setFontSize(f => Math.max(14, f - 1))} title="Perkecil Font">
             <Minus size={16} />
           </button>
-          <span className="read__font-size">{fontSize}px</span>
-          <button className="read__tool-btn" onClick={() => setFontSize(f => Math.min(24, f + 1))}>
+          <span className="read__font-size" style={{ minWidth: '36px', textAlign: 'center' }}>{fontSize}px</span>
+          <button className="read__tool-btn" onClick={() => setFontSize(f => Math.min(24, f + 1))} title="Perbesar Font">
             <Plus size={16} />
           </button>
-          <button className="read__tool-btn" onClick={() => setDarkMode(!darkMode)}>
-            {darkMode ? <Sun size={16} /> : <Moon size={16} />}
+
+          {/* Font Family Toggle */}
+          <button
+            className="read__tool-btn"
+            onClick={() => setFontFamily(f => f === 'serif' ? 'sans-serif' : 'serif')}
+            title="Ganti Font (Serif / Sans)"
+            style={{ fontWeight: 'bold', minWidth: '32px' }}
+          >
+            {fontFamily === 'serif' ? 'Aa' : 'Ag'}
           </button>
+
+          {/* Theme Selector */}
+          <select
+            className="read__theme-select"
+            value={theme}
+            onChange={e => setTheme(e.target.value)}
+            title="Ubah Tema Latar"
+            style={{
+              background: 'rgba(255,255,255,0.06)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'var(--color-text-2)',
+              padding: '6px 8px',
+              borderRadius: '6px',
+              fontSize: '0.75rem',
+              outline: 'none',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="dark">🌌 Gelap</option>
+            <option value="light">📄 Terang</option>
+            <option value="sepia">📜 Sepia</option>
+          </select>
+
           <button className="read__comment-toggle" onClick={() => setShowComments(!showComments)}>
             <MessageCircle size={16} />
             <span>{comments.length}</span>

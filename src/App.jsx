@@ -18,6 +18,7 @@ import Discover from './pages/Discover';
 import NovelDetail from './pages/NovelDetail';
 import ReadChapter from './pages/ReadChapter';
 import Profile from './pages/Profile';
+import Library from './pages/Library';
 
 // Writer Pages
 import Dashboard from './pages/Writer/Dashboard';
@@ -76,6 +77,11 @@ function AppRoutes() {
         <Route path="/novel/:novelId" element={
           <WithLayout onOpenAuth={openAuth}>
             <NovelDetail onOpenAuth={openAuth} />
+          </WithLayout>
+        } />
+        <Route path="/library" element={
+          <WithLayout onOpenAuth={openAuth}>
+            <Library />
           </WithLayout>
         } />
         <Route path="/profile" element={

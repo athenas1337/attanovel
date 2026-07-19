@@ -105,3 +105,28 @@ export const toggleNovelLike = async (novelId, userId, isLiked) => {
     await updateDoc(userRef, { likedNovels: arrayUnion(novelId) });
   }
 };
+
+// Toggle bookmark
+export const toggleNovelBookmark = async (novelId, userId, isBookmarked) => {
+  const novelRef = doc(db, 'novels', novelId);
+  const userRef = doc(db, 'users', userId);
+
+  if (isBookmarked) {
+    await updateDoc(novelRef, { bookmarks: increment(-1) });
+    await updateDoc(userRef, { bookmarkedNovels: arrayRemove(novelId) });
+  } else {
+    await updateDoc(novelRef, { bookmarks: increment(1) });
+    await updateDoc(userRef, { bookmarkedNovels: arrayUnion(novelId) });
+  }
+};
+
+// Get multiple novels by array of IDs (Library)
+export const getNovelsByIds = async (novelIds) => {
+  if (!novelIds || novelIds.length === 0) return [];
+  const q = query(
+    collection(db, 'novels'),
+    where('__name__', 'in', novelIds.slice(0, 30))
+  );
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};

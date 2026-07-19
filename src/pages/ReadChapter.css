@@ -16,6 +16,45 @@
   color: #1a0a3d;
 }
 
+.read--sepia {
+  background: #f4ecd8;
+  color: #4b3621;
+}
+
+/* Light / Sepia overrides for topbar */
+.read--light .read__topbar {
+  background: rgba(248, 245, 255, 0.95);
+  border-bottom-color: rgba(109, 40, 217, 0.15);
+}
+
+.read--sepia .read__topbar {
+  background: rgba(244, 236, 216, 0.95);
+  border-bottom-color: rgba(91, 70, 54, 0.15);
+}
+
+/* Font Families */
+.read--font-serif .read__content {
+  font-family: 'Georgia', 'Times New Roman', serif;
+}
+
+.read--font-sans-serif .read__content {
+  font-family: 'Outfit', 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* Custom text color mappings for light/sepia */
+.read--light .read__chapter-title, .read--light .read__content h2, .read--light .read__content h3 { color: #1a0a3d; }
+.read--light .read__content { color: #2d1b5e; }
+
+.read--sepia .read__chapter-title, .read--sepia .read__content h2, .read--sepia .read__content h3 { color: #3e2f24; }
+.read--sepia .read__content { color: #4b3621; }
+.read--sepia .read__tool-btn { color: #4b3621; }
+.read--sepia .read__back-btn { color: #4b3621; }
+.read--sepia .read__font-size { color: #4b3621; }
+.read--sepia .read__comments-panel { background: #efe5cb; border-left-color: rgba(91, 70, 54, 0.15); }
+.read--sepia .read__comments-header { border-bottom-color: rgba(91, 70, 54, 0.15); }
+.read--sepia .read__comment-form { border-bottom-color: rgba(91, 70, 54, 0.15); }
+.read--sepia .read__comment-input { background: rgba(0,0,0,0.05); border-color: rgba(91, 70, 54, 0.2); color: #4b3621; }
+
 /* ===================== TOP BAR ===================== */
 .read__topbar {
   position: fixed;

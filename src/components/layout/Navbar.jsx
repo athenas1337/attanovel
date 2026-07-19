@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   BookOpen, PenLine, User, Search, Menu, X,
-  LogOut, ChevronDown, Crown, Compass, Home
+  LogOut, ChevronDown, Crown, Compass, Home, Bookmark
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { logoutUser } from '../../firebase/auth';
@@ -36,6 +36,7 @@ const Navbar = ({ onOpenAuth }) => {
   const navLinks = [
     { to: '/', label: 'Beranda', icon: <Home size={16} /> },
     { to: '/discover', label: 'Jelajahi', icon: <Compass size={16} /> },
+    { to: '/library', label: 'Perpustakaan', icon: <Bookmark size={16} /> },
   ];
 
   return (

@@ -5,7 +5,7 @@ import {
   BookOpen, Eye, Heart, Bookmark, Share2, User,
   Calendar, Tag, ChevronRight, Lock, Clock, Edit
 } from 'lucide-react';
-import { getNovel, incrementViews, toggleNovelLike } from '../firebase/novels';
+import { getNovel, incrementViews, toggleNovelLike, toggleNovelBookmark } from '../firebase/novels';
 import { getChapters } from '../firebase/chapters';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -54,6 +54,12 @@ const NovelDetail = ({ onOpenAuth }) => {
         } else {
           setLiked(false);
         }
+
+        if (userProfile && userProfile.bookmarkedNovels?.includes(novelId)) {
+          setBookmarked(true);
+        } else {
+          setBookmarked(false);
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -87,10 +93,24 @@ const NovelDetail = ({ onOpenAuth }) => {
     }
   };
 
-  const handleBookmark = () => {
+  const handleBookmark = async () => {
     if (!user) { onOpenAuth('login'); return; }
-    setBookmarked(!bookmarked);
-    toast.success(bookmarked ? 'Bookmark dihapus' : 'Novel di-bookmark! 🔖');
+    try {
+      await toggleNovelBookmark(novelId, user.uid, bookmarked);
+      setBookmarked(!bookmarked);
+
+      if (userProfile) {
+        if (bookmarked) {
+          userProfile.bookmarkedNovels = (userProfile.bookmarkedNovels || []).filter(id => id !== novelId);
+        } else {
+          userProfile.bookmarkedNovels = [...(userProfile.bookmarkedNovels || []), novelId];
+        }
+      }
+
+      toast.success(bookmarked ? 'Bookmark dihapus' : 'Novel di-bookmark! 🔖');
+    } catch (e) {
+      toast.error('Gagal memproses bookmark.');
+    }
   };
 
   const handleShare = () => {

@@ -24,9 +24,20 @@ const EditChapter = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [status, setStatus] = useState('draft');
+  const [stats, setStats] = useState({ words: 0, chars: 0, readTime: 0 });
   const editorRef = useRef(null);
   const imageInputRef = useRef(null);
   const autoSaveTimer = useRef(null);
+
+  const updateStats = () => {
+    if (!editorRef.current) return;
+    const text = editorRef.current.innerText || '';
+    const cleanText = text.trim();
+    const words = cleanText === '' ? 0 : cleanText.split(/\s+/).length;
+    const chars = text.length;
+    const readTime = Math.ceil(words / 200); // 200 words/minute
+    setStats({ words, chars, readTime });
+  };
 
   useEffect(() => {
     if (!user) { navigate('/'); return; }
@@ -65,6 +76,7 @@ const EditChapter = () => {
   useEffect(() => {
     if (!loading && chapter && editorRef.current) {
       editorRef.current.innerHTML = chapter.content || '';
+      updateStats();
     }
   }, [loading, chapter]);
 
@@ -279,12 +291,18 @@ const EditChapter = () => {
           suppressContentEditableWarning
           spellCheck={false}
           data-placeholder="Mulai menulis cerita Anda di sini..."
+          onInput={updateStats}
         />
       </div>
 
       {/* Footer */}
       <div className="edit-chapter__footer">
         <span>AttaNovel Editor · Made by <strong>Atha</strong></span>
+        <span className="edit-chapter__stats" style={{ color: 'var(--color-gold)', display: 'flex', gap: '12px', fontSize: '0.8rem' }}>
+          <span>📝 <strong>{stats.words}</strong> kata</span>
+          <span>🔤 <strong>{stats.chars}</strong> karakter</span>
+          <span>⏱️ Est. <strong>{stats.readTime}</strong> mnt baca</span>
+        </span>
         <span>Ctrl+S untuk simpan cepat</span>
       </div>
     </div>
