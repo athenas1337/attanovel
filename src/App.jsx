@@ -36,6 +36,13 @@ import CreateNovel from './pages/Writer/CreateNovel';
 import NovelManager from './pages/Writer/NovelManager';
 import EditChapter from './pages/Writer/EditChapter';
 
+// Static & Info Pages
+import FAQ from './pages/FAQ';
+import WriterGuide from './pages/WriterGuide';
+import Terms from './pages/Terms';
+import Privacy from './pages/Privacy';
+import ActivityLog from './pages/ActivityLog';
+
 import './styles/globals.css';
 
 // Protected Route Component
@@ -168,6 +175,35 @@ function AppRoutes() {
               <EditChapter />
             </ProtectedRoute>
           </EditorLayout>
+        } />
+
+        {/* Static & Info Pages */}
+        <Route path="/faq" element={
+          <WithLayout onOpenAuth={openAuth}>
+            <FAQ />
+          </WithLayout>
+        } />
+        <Route path="/writer-guide" element={
+          <WithLayout onOpenAuth={openAuth}>
+            <WriterGuide />
+          </WithLayout>
+        } />
+        <Route path="/terms" element={
+          <WithLayout onOpenAuth={openAuth}>
+            <Terms />
+          </WithLayout>
+        } />
+        <Route path="/privacy" element={
+          <WithLayout onOpenAuth={openAuth}>
+            <Privacy />
+          </WithLayout>
+        } />
+        <Route path="/activity" element={
+          <WithLayout onOpenAuth={openAuth}>
+            <ProtectedRoute>
+              <ActivityLog />
+            </ProtectedRoute>
+          </WithLayout>
         } />
 
         {/* 404 */}

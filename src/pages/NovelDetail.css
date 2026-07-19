@@ -53,6 +53,7 @@
 /* Cover */
 .novel-detail__cover-wrap {
   flex-shrink: 0;
+  position: relative; /* Required for absolute status badge */
 }
 
 .novel-detail__cover {

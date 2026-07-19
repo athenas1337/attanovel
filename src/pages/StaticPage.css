@@ -1,0 +1,59 @@
+/* src/pages/StaticPage.css */
+/* Shared styles for static informational pages: Panduan Penulis, Syarat & Ketentuan, Kebijakan Privasi */
+.static-page {
+  padding: 80px 0 var(--space-3xl);
+  min-height: 100vh;
+}
+
+.static-page__hero {
+  text-align: center;
+  padding: var(--space-3xl) 0 var(--space-xl);
+}
+
+.static-page__hero h1 {
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 900;
+  margin-bottom: var(--space-sm);
+}
+
+.static-page__hero p {
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+}
+
+.static-page__body {
+  max-width: 800px;
+  margin: 0 auto;
+  padding-bottom: var(--space-3xl);
+}
+
+.static-page__section {
+  margin-bottom: var(--space-xl);
+  padding: var(--space-xl);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(139,92,246,0.12);
+  border-radius: var(--radius-lg);
+}
+
+.static-page__section h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+  color: var(--color-primary-light);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.static-page__section p,
+.static-page__section li {
+  color: var(--color-text-2);
+  font-size: 0.93rem;
+  line-height: 1.8;
+  margin-bottom: 8px;
+}
+
+.static-page__section ul {
+  padding-left: 20px;
+  margin: 0;
+}

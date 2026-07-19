@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ChevronLeft, ChevronRight, BookOpen, MessageCircle,
-  Sun, Moon, Minus, Plus, Menu, X, Send, Heart, Reply, Trash2, User
+  Sun, Moon, Minus, Plus, Menu, X, Send, Heart, Reply, Trash2, User, Sparkles
 } from 'lucide-react';
 import { getNovel } from '../firebase/novels';
 import { getChapters } from '../firebase/chapters';
@@ -31,6 +31,24 @@ const ReadChapter = ({ onOpenAuth }) => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   const contentRef = useRef(null);
+
+  // Particle background toggle — persisted in localStorage
+  const [showParticles, setShowParticles] = useState(() => {
+    const saved = localStorage.getItem('attanovel_read_particles');
+    return saved === null ? true : saved === 'true';
+  });
+
+  // Apply/remove particles when reading
+  useEffect(() => {
+    const el = document.querySelector('.particle-canvas');
+    if (el) el.style.display = showParticles ? '' : 'none';
+    localStorage.setItem('attanovel_read_particles', showParticles);
+    return () => {
+      // Always restore particles when leaving reader
+      const el2 = document.querySelector('.particle-canvas');
+      if (el2) el2.style.display = '';
+    };
+  }, [showParticles]);
 
   useEffect(() => {
     const load = async () => {
@@ -231,6 +249,19 @@ const ReadChapter = ({ onOpenAuth }) => {
           <button className="read__comment-toggle" onClick={() => setShowComments(!showComments)}>
             <MessageCircle size={16} />
             <span>{comments.length}</span>
+          </button>
+
+          {/* Particle Toggle */}
+          <button
+            className="read__tool-btn"
+            onClick={() => setShowParticles(p => !p)}
+            title={showParticles ? 'Sembunyikan efek bintang' : 'Tampilkan efek bintang'}
+            style={{
+              color: showParticles ? 'var(--color-gold)' : 'var(--color-text-muted)',
+              fontSize: '0.7rem', gap: '3px', display: 'flex', alignItems: 'center',
+            }}
+          >
+            <Sparkles size={14} />
           </button>
         </div>
       </div>

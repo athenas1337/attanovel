@@ -1,7 +1,8 @@
+// src/firebase/chat.js
 import { db } from './config';
 import {
-  collection, doc, query, getDocs, addDoc, updateDoc,
-  serverTimestamp, where, deleteDoc, writeBatch
+  collection, doc, query, getDocs, addDoc, updateDoc, getDoc,
+  serverTimestamp, where, deleteDoc, writeBatch, increment
 } from 'firebase/firestore';
 
 // Get or Create a chat between two users
@@ -22,25 +23,51 @@ export const getOrCreateChat = async (user1, user2) => {
     participants: [user1, user2],
     lastMessage: '',
     updatedAt: serverTimestamp(),
+    unreadCount: { [user1]: 0, [user2]: 0 },
   });
   
   return newChatRef.id;
 };
 
-// Send message inside a chat
-export const sendChatMessage = async (chatId, senderId, text) => {
+// Send message inside a chat — increments unread count for recipient
+export const sendChatMessage = async (chatId, senderId, text, participants) => {
   const chatRef = doc(db, 'chats', chatId);
   
   await addDoc(collection(db, 'chats', chatId, 'messages'), {
     senderId,
     text,
-    createdAt: serverTimestamp()
+    createdAt: serverTimestamp(),
+    read: false,
   });
+
+  // Build unread increment for the OTHER participant
+  const unreadUpdate = {};
+  if (participants) {
+    participants.forEach(uid => {
+      if (uid !== senderId) {
+        unreadUpdate[`unreadCount.${uid}`] = increment(1);
+      }
+    });
+  }
   
   await updateDoc(chatRef, {
     lastMessage: text,
-    updatedAt: serverTimestamp()
+    lastSenderId: senderId,
+    updatedAt: serverTimestamp(),
+    ...unreadUpdate,
   });
+};
+
+// Mark messages as read for a user (reset their unread count)
+export const markChatAsRead = async (chatId, userId) => {
+  try {
+    const chatRef = doc(db, 'chats', chatId);
+    await updateDoc(chatRef, {
+      [`unreadCount.${userId}`]: 0,
+    });
+  } catch (e) {
+    // silently fail - not critical
+  }
 };
 
 // Delete a specific message
@@ -58,10 +85,9 @@ export const clearChatMessages = async (chatId) => {
   });
   await batch.commit();
 
-  // Reset lastMessage
   const chatRef = doc(db, 'chats', chatId);
   await updateDoc(chatRef, {
-    lastMessage: 'Pesan telah dihapus',
-    updatedAt: serverTimestamp()
+    lastMessage: '',
+    updatedAt: serverTimestamp(),
   });
 };

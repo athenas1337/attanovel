@@ -1,13 +1,15 @@
 // src/components/layout/Navbar.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   BookOpen, PenLine, User, Search, Menu, X,
   LogOut, ChevronDown, Crown, Compass, Home, Bookmark,
-  Trophy, Users, Settings, MessageSquare
+  Trophy, Users, Settings, MessageSquare, Bell, Activity
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { logoutUser } from '../../firebase/auth';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { db } from '../../firebase/config';
 import toast from 'react-hot-toast';
 import './Navbar.css';
 
@@ -18,6 +20,21 @@ const Navbar = ({ onOpenAuth }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [searchVal, setSearchVal] = useState('');
+  const [totalUnread, setTotalUnread] = useState(0);
+
+  // Real-time unread chat count
+  useEffect(() => {
+    if (!user) { setTotalUnread(0); return; }
+    const q = query(collection(db, 'chats'), where('participants', 'array-contains', user.uid));
+    const unsub = onSnapshot(q, (snap) => {
+      let count = 0;
+      snap.docs.forEach(d => {
+        count += d.data().unreadCount?.[user.uid] || 0;
+      });
+      setTotalUnread(count);
+    });
+    return unsub;
+  }, [user]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -85,6 +102,17 @@ const Navbar = ({ onOpenAuth }) => {
                 <PenLine size={14} />
                 Tulis
               </Link>
+              {/* Chat notification icon */}
+              <Link
+                to="/chat"
+                className="navbar__chat-btn"
+                title={totalUnread > 0 ? `${totalUnread} pesan belum dibaca` : 'Obrolan'}
+              >
+                <MessageSquare size={18} />
+                {totalUnread > 0 && (
+                  <span className="navbar__chat-badge">{totalUnread > 9 ? '9+' : totalUnread}</span>
+                )}
+              </Link>
               <div className="navbar__profile" onClick={() => setProfileOpen(!profileOpen)}>
                 <div className="navbar__avatar">
                   {userProfile?.avatar
@@ -108,6 +136,10 @@ const Navbar = ({ onOpenAuth }) => {
                     </Link>
                     <Link to="/chat" className="navbar__dropdown-item" onClick={() => setProfileOpen(false)}>
                       <MessageSquare size={15} /> Obrolan Chat
+                      {totalUnread > 0 && <span className="navbar__dropdown-badge">{totalUnread > 9 ? '9+' : totalUnread}</span>}
+                    </Link>
+                    <Link to="/activity" className="navbar__dropdown-item" onClick={() => setProfileOpen(false)}>
+                      <Activity size={15} /> Riwayat Aktivitas
                     </Link>
                     <Link to="/settings" className="navbar__dropdown-item" onClick={() => setProfileOpen(false)}>
                       <Settings size={15} /> Pengaturan
