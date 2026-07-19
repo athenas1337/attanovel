@@ -117,15 +117,38 @@ const Chat = () => {
     return unsubscribe;
   }, [activeChatId]);
 
-  // Scroll to bottom on new messages only
+  // ─── Smart Auto-Scroll Logic ───────────────────────────────────────────────
+  const messagesBodyRef = useRef(null);
   const prevMessagesLength = useRef(0);
+  const isUserNearBottom = useRef(true);
+
+  // Track whether the user is near the bottom of the chat
+  const handleScroll = () => {
+    const el = messagesBodyRef.current;
+    if (!el) return;
+    const threshold = 80; // px from bottom
+    isUserNearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+  };
+
   useEffect(() => {
     const currentLength = messages.length;
-    if (currentLength > prevMessagesLength.current || prevMessagesLength.current === 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const prevLength = prevMessagesLength.current;
+    const wasMessageAdded = currentLength > prevLength;
+
+    if (wasMessageAdded) {
+      // Always scroll if the new message is from the current user
+      const lastMsg = messages[messages.length - 1];
+      const isOwnMsg = lastMsg && lastMsg.senderId === user?.uid;
+
+      if (isOwnMsg || isUserNearBottom.current) {
+        // Use setTimeout to ensure DOM has rendered before scrolling
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }, 50);
+      }
     }
     prevMessagesLength.current = currentLength;
-  }, [messages]);
+  }, [messages, user]);
 
   const handleDeleteMessage = async (messageId) => {
     if (!activeChatId) return;
@@ -255,7 +278,11 @@ const Chat = () => {
               </div>
 
               {/* Messages Body */}
-              <div className="chat-page__messages-body">
+              <div
+                className="chat-page__messages-body"
+                ref={messagesBodyRef}
+                onScroll={handleScroll}
+              >
                 {messages.map(msg => {
                   const isOwn = msg.senderId === user.uid;
                   return (

@@ -10,6 +10,11 @@ import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import ParticleBackground from './components/layout/ParticleBackground';
 
+// Global UI Components
+import BackToTop from './components/ui/BackToTop';
+import ReadingProgressBar from './components/ui/ReadingProgressBar';
+import AnnouncementBanner from './components/ui/AnnouncementBanner';
+
 // Auth
 import AuthModal from './components/auth/AuthModal';
 
@@ -61,6 +66,8 @@ function AppRoutes() {
 
   return (
     <>
+      <ReadingProgressBar />
+      <AnnouncementBanner />
       <ParticleBackground />
 
       {authModal && (
@@ -186,6 +193,7 @@ function AppRoutes() {
           },
         }}
       />
+      <BackToTop />
     </>
   );
 }

@@ -3,33 +3,55 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   BookOpen, PenLine, Star, TrendingUp, Sparkles,
-  Crown, ChevronRight, Eye, Heart, Bookmark
+  Crown, ChevronRight, Eye, Heart, Bookmark, Clock, Flame
 } from 'lucide-react';
 import { getPublishedNovels } from '../firebase/novels';
 import { useAuth } from '../context/AuthContext';
+import { getRecentlyViewed } from '../hooks/useRecentlyViewed';
 import './Home.css';
 
 const GENRES = ['Semua', 'Fantasy', 'Romance', 'Action', 'Mystery', 'Horror', 'Sci-Fi', 'Drama'];
 
+const writingStatusBadge = (status) => {
+  const map = {
+    'Completed': { label: 'Tamat', color: '#10b981', bg: 'rgba(16,185,129,0.85)' },
+    'Hiatus': { label: 'Hiatus', color: '#fff', bg: 'rgba(245,158,11,0.85)' },
+    'Dropped': { label: 'Dropped', color: '#fff', bg: 'rgba(239,68,68,0.85)' },
+    'Planning': { label: 'Rencana', color: '#fff', bg: 'rgba(99,102,241,0.85)' },
+    'Ongoing': { label: 'Ongoing', color: '#fff', bg: 'rgba(109,40,217,0.85)' },
+  };
+  return map[status] || map['Ongoing'];
+};
+
 const NovelCard = ({ novel }) => {
   const navigate = useNavigate();
+  const sc = writingStatusBadge(novel.writingStatus || 'Ongoing');
   return (
-    <div className="novel-card" onClick={() => navigate(`/novel/${novel.id}`)}>
-      {novel.cover
-        ? <img src={novel.cover} alt={novel.title} className="novel-card__cover" />
-        : (
-          <div className="novel-card__cover-placeholder">
-            <span>📖</span>
-          </div>
-        )
-      }
+    <div className="novel-card" onClick={() => navigate(`/novel/${novel.id}`)}
+      style={{ transition: 'all 0.25s ease', cursor: 'pointer' }}
+      onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-4px)'; e.currentTarget.style.boxShadow = '0 12px 40px rgba(109,40,217,0.3)'; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = ''; }}
+    >
+      <div style={{ position: 'relative' }}>
+        {novel.cover
+          ? <img src={novel.cover} alt={novel.title} className="novel-card__cover" />
+          : <div className="novel-card__cover-placeholder"><span>📖</span></div>
+        }
+        <div style={{
+          position: 'absolute', top: '7px', left: '7px',
+          background: sc.bg, color: sc.color,
+          fontSize: '0.62rem', fontWeight: '700', padding: '2px 7px',
+          borderRadius: '20px', backdropFilter: 'blur(4px)', letterSpacing: '0.04em',
+          textTransform: 'uppercase', boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+        }}>{sc.label}</div>
+      </div>
       <div className="novel-card__body">
         <h3 className="novel-card__title">{novel.title}</h3>
         <p className="novel-card__author">oleh {novel.authorName || 'Anonim'}</p>
         <div className="novel-card__stats">
           <span><Eye size={11} /> {(novel.views || 0).toLocaleString()}</span>
           <span><Heart size={11} /> {(novel.likes || 0).toLocaleString()}</span>
-          {novel.genre && <span className="badge badge-primary">{novel.genre}</span>}
+          {novel.genre && <span className="badge badge-primary">{novel.genre.split(',')[0].trim()}</span>}
         </div>
       </div>
     </div>
@@ -41,12 +63,13 @@ const Home = ({ onOpenAuth }) => {
   const [novels, setNovels] = useState([]);
   const [activeGenre, setActiveGenre] = useState('Semua');
   const [loading, setLoading] = useState(true);
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await getPublishedNovels(20);
+        const data = await getPublishedNovels(30);
         setNovels(data);
       } catch (e) {
         console.error(e);
@@ -55,11 +78,15 @@ const Home = ({ onOpenAuth }) => {
       }
     };
     load();
+    setRecentlyViewed(getRecentlyViewed());
   }, []);
 
   const filtered = activeGenre === 'Semua'
     ? novels
-    : novels.filter(n => n.genre?.toLowerCase().split(', ').map(g => g.trim()).includes(activeGenre.toLowerCase()));
+    : novels.filter(n => n.genre?.toLowerCase().split(',').map(g => g.trim()).includes(activeGenre.toLowerCase()));
+
+  // Trending: top 5 by likes
+  const trending = [...novels].sort((a, b) => (b.likes || 0) - (a.likes || 0)).slice(0, 5);
 
   return (
     <div className="home">
@@ -231,6 +258,57 @@ const Home = ({ onOpenAuth }) => {
               </Link>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* ===================== RECENTLY VIEWED ===================== */}
+      {recentlyViewed.length > 0 && (
+        <section className="home__novels" style={{ paddingTop: 0 }}>
+          <div className="container">
+            <div className="home__section-header">
+              <Clock size={20} className="home__section-icon" />
+              <h2 className="section-title">Terakhir <span className="text-gradient">Dilihat</span></h2>
+              <p className="section-subtitle">Lanjutkan membaca dari mana kamu berhenti</p>
+            </div>
+            <div className="home__novels-grid">
+              {recentlyViewed.slice(0, 6).map(novel => (
+                <NovelCard key={novel.id} novel={novel} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ===================== TRENDING ===================== */}
+      {trending.some(n => (n.likes || 0) > 0) && (
+        <section className="home__novels" style={{ paddingTop: 0 }}>
+          <div className="container">
+            <div className="home__section-header">
+              <Flame size={20} className="home__section-icon" style={{ color: '#f59e0b' }} />
+              <h2 className="section-title">Sedang <span className="text-gradient">Trending</span></h2>
+              <p className="section-subtitle">Novel yang paling banyak disukai saat ini</p>
+            </div>
+            <div className="home__novels-grid">
+              {trending.filter(n => (n.likes || 0) > 0).map((novel, idx) => (
+                <div key={novel.id} style={{ position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute', top: '-8px', left: '-8px', zIndex: 2,
+                    width: '28px', height: '28px', borderRadius: '50%',
+                    background: idx === 0 ? 'linear-gradient(135deg, #f59e0b, #ef4444)' : 'linear-gradient(135deg, #6d28d9, #8b5cf6)',
+                    color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '0.8rem', fontWeight: '900', boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+                  }}>#{idx + 1}</div>
+                  <NovelCard novel={novel} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* placeholder to prevent double section close */}
+      <section style={{ display: 'none' }}>
+        <div className="container">
         </div>
       </section>
 
