@@ -1,5 +1,5 @@
 // src/pages/Profile.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { User, BookOpen, Eye, Heart, Calendar, Edit3, Crown } from 'lucide-react';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
@@ -16,8 +16,11 @@ const Profile = () => {
   const [novels, setNovels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
-  const [editForm, setEditForm] = useState({ displayName: '', bio: '' });
+  const [editForm, setEditForm] = useState({ displayName: '', bio: '', avatar: '', avatarUrl: '' });
   const [saving, setSaving] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
+  const avatarInputRef = useRef(null);
 
   const targetId = userId || user?.uid;
   const isOwn = user && user.uid === targetId;
@@ -30,7 +33,12 @@ const Profile = () => {
         if (snap.exists()) {
           const p = snap.data();
           setProfile(p);
-          setEditForm({ displayName: p.displayName || '', bio: p.bio || '' });
+          setEditForm({
+            displayName: p.displayName || '',
+            bio: p.bio || '',
+            avatar: p.avatar || '',
+            avatarUrl: p.avatar || ''
+          });
         }
         const nvls = await getNovelsByAuthor(targetId);
         setNovels(nvls.filter(n => isOwn || n.status === 'published'));
@@ -43,15 +51,56 @@ const Profile = () => {
     load();
   }, [targetId, isOwn]);
 
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Ukuran avatar maksimal 2MB');
+      return;
+    }
+    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setAvatarPreview(reader.result);
+    reader.readAsDataURL(file);
+  };
+
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
+      let finalAvatar = editForm.avatarUrl || profile.avatar || '';
+
+      if (avatarFile) {
+        try {
+          const { uploadAvatar } = await import('../firebase/auth');
+          finalAvatar = await uploadAvatar(avatarFile, user.uid);
+        } catch (storageErr) {
+          console.warn("Storage upload failed, fallback to url if any", storageErr);
+          toast.error("Gagal mengunggah file avatar (Gunakan opsi URL Gambar).");
+        }
+      }
+
       await updateDoc(doc(db, 'users', user.uid), {
         displayName: editForm.displayName,
         bio: editForm.bio,
+        avatar: finalAvatar,
       });
-      setProfile(p => ({ ...p, displayName: editForm.displayName, bio: editForm.bio }));
+
+      setProfile(p => ({
+        ...p,
+        displayName: editForm.displayName,
+        bio: editForm.bio,
+        avatar: finalAvatar
+      }));
+
+      // Update local profile state
+      if (userProfile) {
+        userProfile.displayName = editForm.displayName;
+        userProfile.bio = editForm.bio;
+        userProfile.avatar = finalAvatar;
+      }
+
       setEditMode(false);
+      setAvatarFile(null);
       toast.success('Profil berhasil diperbarui!');
     } catch (e) {
       toast.error('Gagal menyimpan profil.');
@@ -85,16 +134,38 @@ const Profile = () => {
         <div className="profile__banner-overlay" />
         <div className="container profile__banner-inner">
           <div className="profile__avatar-wrap">
-            <div className="profile__avatar">
-              {profile.avatar
-                ? <img src={profile.avatar} alt="" />
-                : <User size={40} />
+            <div
+              className={`profile__avatar ${editMode ? 'profile__avatar--clickable' : ''}`}
+              onClick={() => editMode && avatarInputRef.current?.click()}
+            >
+              {avatarPreview
+                ? <img src={avatarPreview} alt="Avatar preview" />
+                : profile.avatar
+                  ? <img src={profile.avatar} alt="Avatar" />
+                  : <User size={40} />
               }
+              {editMode && (
+                <div className="profile__avatar-overlay">
+                  <Edit3 size={16} />
+                  <span>Ubah</span>
+                </div>
+              )}
             </div>
-            {isOwn && (
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleAvatarChange}
+              style={{ display: 'none' }}
+            />
+            {isOwn && !editMode && (
               <button
                 className="profile__edit-btn"
-                onClick={() => setEditMode(!editMode)}
+                onClick={() => {
+                  setEditMode(true);
+                  setAvatarPreview(profile.avatar);
+                  setEditForm(f => ({ ...f, avatarUrl: profile.avatar || '' }));
+                }}
                 title="Edit profil"
               >
                 <Edit3 size={14} />
@@ -104,20 +175,40 @@ const Profile = () => {
           <div className="profile__info">
             {editMode ? (
               <div className="profile__edit-form">
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Nama Anda"
-                  value={editForm.displayName}
-                  onChange={e => setEditForm(f => ({ ...f, displayName: e.target.value }))}
-                />
-                <textarea
-                  className="form-input form-textarea"
-                  placeholder="Tulis bio Anda..."
-                  value={editForm.bio}
-                  onChange={e => setEditForm(f => ({ ...f, bio: e.target.value }))}
-                  rows={3}
-                />
+                <div className="form-group">
+                  <label className="form-label">Nama Pengguna</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Nama Anda"
+                    value={editForm.displayName}
+                    onChange={e => setEditForm(f => ({ ...f, displayName: e.target.value }))}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Bio Singkat</label>
+                  <textarea
+                    className="form-input form-textarea"
+                    placeholder="Tulis bio Anda..."
+                    value={editForm.bio}
+                    onChange={e => setEditForm(f => ({ ...f, bio: e.target.value }))}
+                    rows={3}
+                  />
+                </div>
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Atau gunakan URL Foto Profil:</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="https://contoh.com/avatar.jpg"
+                    value={editForm.avatarUrl}
+                    onChange={e => {
+                      setEditForm(f => ({ ...f, avatarUrl: e.target.value }));
+                      setAvatarPreview(e.target.value);
+                    }}
+                    style={{ padding: '8px 12px', fontSize: '0.85rem' }}
+                  />
+                </div>
                 <div className="profile__edit-actions">
                   <button className="btn btn-primary btn-sm" onClick={handleSaveProfile} disabled={saving}>
                     {saving ? <div className="spinner" /> : 'Simpan'}

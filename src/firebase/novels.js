@@ -2,7 +2,7 @@
 import {
   collection, doc, addDoc, updateDoc, deleteDoc,
   getDoc, getDocs, query, where, orderBy, limit,
-  serverTimestamp, increment
+  serverTimestamp, increment, arrayUnion, arrayRemove
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { db, storage } from './config';
@@ -93,6 +93,15 @@ export const incrementViews = async (novelId) => {
 };
 
 // Toggle like
-export const toggleLike = async (novelId) => {
-  await updateDoc(doc(db, 'novels', novelId), { likes: increment(1) });
+export const toggleNovelLike = async (novelId, userId, isLiked) => {
+  const novelRef = doc(db, 'novels', novelId);
+  const userRef = doc(db, 'users', userId);
+
+  if (isLiked) {
+    await updateDoc(novelRef, { likes: increment(-1) });
+    await updateDoc(userRef, { likedNovels: arrayRemove(novelId) });
+  } else {
+    await updateDoc(novelRef, { likes: increment(1) });
+    await updateDoc(userRef, { likedNovels: arrayUnion(novelId) });
+  }
 };

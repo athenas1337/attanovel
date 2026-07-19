@@ -9,7 +9,14 @@ import {
   onAuthStateChanged
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
-import { auth, db } from './config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { auth, db, storage } from './config';
+
+export const uploadAvatar = async (file, userId) => {
+  const storageRef = ref(storage, `avatars/${userId}/${Date.now()}_${file.name}`);
+  await uploadBytes(storageRef, file);
+  return getDownloadURL(storageRef);
+};
 
 const googleProvider = new GoogleAuthProvider();
 

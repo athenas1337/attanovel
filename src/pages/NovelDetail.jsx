@@ -5,7 +5,7 @@ import {
   BookOpen, Eye, Heart, Bookmark, Share2, User,
   Calendar, Tag, ChevronRight, Lock, Clock, Edit
 } from 'lucide-react';
-import { getNovel, incrementViews, toggleLike } from '../firebase/novels';
+import { getNovel, incrementViews, toggleNovelLike } from '../firebase/novels';
 import { getChapters } from '../firebase/chapters';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -14,7 +14,7 @@ import './NovelDetail.css';
 const NovelDetail = ({ onOpenAuth }) => {
   const { novelId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [novel, setNovel] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,7 +30,21 @@ const NovelDetail = ({ onOpenAuth }) => {
         ]);
         setNovel(n);
         setChapters(chs);
-        if (n) await incrementViews(novelId);
+        
+        if (n) {
+          const viewed = sessionStorage.getItem(`viewed_${novelId}`);
+          if (!viewed) {
+            await incrementViews(novelId);
+            sessionStorage.setItem(`viewed_${novelId}`, 'true');
+            n.views = (n.views || 0) + 1;
+          }
+        }
+
+        if (userProfile && userProfile.likedNovels?.includes(novelId)) {
+          setLiked(true);
+        } else {
+          setLiked(false);
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -38,15 +52,29 @@ const NovelDetail = ({ onOpenAuth }) => {
       }
     };
     load();
-  }, [novelId]);
+  }, [novelId, userProfile]);
 
   const handleLike = async () => {
     if (!user) { onOpenAuth('login'); return; }
-    if (!liked) {
-      await toggleLike(novelId);
-      setNovel(n => ({ ...n, likes: (n.likes || 0) + 1 }));
-      setLiked(true);
-      toast.success('Novel disukai! ❤️');
+    try {
+      await toggleNovelLike(novelId, user.uid, liked);
+      setNovel(n => ({
+        ...n,
+        likes: (n.likes || 0) + (liked ? -1 : 1)
+      }));
+      setLiked(!liked);
+
+      if (userProfile) {
+        if (liked) {
+          userProfile.likedNovels = (userProfile.likedNovels || []).filter(id => id !== novelId);
+        } else {
+          userProfile.likedNovels = [...(userProfile.likedNovels || []), novelId];
+        }
+      }
+
+      toast.success(liked ? 'Batal menyukai novel' : 'Novel disukai! ❤️');
+    } catch (e) {
+      toast.error('Gagal memproses likes.');
     }
   };
 
