@@ -23,9 +23,9 @@ const ReadChapter = ({ onOpenAuth }) => {
   const [loading, setLoading] = useState(true);
   const [showToc, setShowToc] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [theme, setTheme] = useState('dark');
-  const [fontFamily, setFontFamily] = useState('serif');
-  const [fontSize, setFontSize] = useState(18);
+  const [theme, setTheme] = useState(() => localStorage.getItem('attanovel_read_theme') || 'dark');
+  const [fontFamily, setFontFamily] = useState(() => localStorage.getItem('attanovel_read_font') || 'serif');
+  const [fontSize, setFontSize] = useState(() => parseInt(localStorage.getItem('attanovel_read_size') || '18'));
   const [newComment, setNewComment] = useState('');
   const [sendingComment, setSendingComment] = useState(false);
   const [replyingTo, setReplyingTo] = useState(null);
@@ -79,9 +79,25 @@ const ReadChapter = ({ onOpenAuth }) => {
     if (contentRef.current) window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [chapterId]);
 
+  // Persist reading preferences
+  useEffect(() => { localStorage.setItem('attanovel_read_theme', theme); }, [theme]);
+  useEffect(() => { localStorage.setItem('attanovel_read_font', fontFamily); }, [fontFamily]);
+  useEffect(() => { localStorage.setItem('attanovel_read_size', fontSize); }, [fontSize]);
+
+  // Keyboard shortcuts: Left/Right arrow for prev/next chapter
   const currentIdx = chapters.findIndex(c => c.id === chapterId);
   const prevChapter = currentIdx > 0 ? chapters[currentIdx - 1] : null;
   const nextChapter = currentIdx < chapters.length - 1 ? chapters[currentIdx + 1] : null;
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.key === 'ArrowLeft' && prevChapter) navigate(`/novel/${novelId}/chapter/${prevChapter.id}`);
+      if (e.key === 'ArrowRight' && nextChapter) navigate(`/novel/${novelId}/chapter/${nextChapter.id}`);
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [prevChapter, nextChapter, novelId, navigate]);
 
   const handleSendComment = async (e) => {
     e.preventDefault();
@@ -225,11 +241,25 @@ const ReadChapter = ({ onOpenAuth }) => {
           {/* Chapter Header */}
           <div className="read__chapter-header">
             <div className="read__chapter-meta">
-              Bab {currentIdx + 1}
+              Bab {currentIdx + 1} dari {chapters.length}
             </div>
             <h1 className="read__chapter-title">{chapter.title}</h1>
-            <div className="read__chapter-date">
-              {formatDate(chapter.updatedAt)}
+            <div className="read__chapter-date" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+              <span>{formatDate(chapter.updatedAt)}</span>
+              {chapter.content && (() => {
+                const words = chapter.content.replace(/<[^>]*>/g,'').trim().split(/\s+/).filter(Boolean).length;
+                const mins = Math.max(1, Math.round(words / 200));
+                return (
+                  <>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      📖 ~{words.toLocaleString()} kata
+                    </span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      ⏱ ~{mins} menit baca
+                    </span>
+                  </>
+                );
+              })()}
             </div>
           </div>
 
