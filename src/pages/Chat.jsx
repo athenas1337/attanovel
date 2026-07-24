@@ -1,13 +1,19 @@
-// src/pages/Chat.jsx — Premium Chat UI with notifications, unread badges, timestamps, emoji
+// src/pages/Chat.jsx — Premium Chat UI (Fixed: scroll, presence, last seen, unread badge)
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
   Send, User, MessageSquare, ArrowLeft, Trash2,
-  Smile, MoreVertical, CheckCheck, Bell, Search, X
+  Smile, CheckCheck, Bell, Search, X, Circle
 } from 'lucide-react';
-import { collection, query, where, onSnapshot, orderBy, getDoc, doc } from 'firebase/firestore';
+import {
+  collection, query, where, onSnapshot, orderBy, getDoc, doc
+} from 'firebase/firestore';
 import { db } from '../firebase/config';
-import { getOrCreateChat, sendChatMessage, deleteChatMessage, clearChatMessages, markChatAsRead } from '../firebase/chat';
+import {
+  getOrCreateChat, sendChatMessage, deleteChatMessage,
+  clearChatMessages, markChatAsRead
+} from '../firebase/chat';
+import { subscribeToPresence, formatLastSeen } from '../firebase/presence';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import toast from 'react-hot-toast';
@@ -44,6 +50,7 @@ const Chat = () => {
   const [activeChatId, setActiveChatId] = useState(null);
   const [activeParticipants, setActiveParticipants] = useState([]);
   const [targetProfile, setTargetProfile] = useState(null);
+  const [targetPresence, setTargetPresence] = useState({ online: false, lastSeen: null });
   const [chatRooms, setChatRooms] = useState([]);
   const [messages, setMessages] = useState([]);
   const [inputText, setInputText] = useState('');
@@ -54,11 +61,14 @@ const Chat = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [totalUnread, setTotalUnread] = useState(0);
 
-  const messagesEndRef = useRef(null);
   const messagesBodyRef = useRef(null);
-  const isUserNearBottom = useRef(true);
-  const prevMessagesLength = useRef(0);
+  const messagesEndRef = useRef(null);
+  // Track if we are near bottom BEFORE messages update
+  const wasNearBottom = useRef(true);
+  const prevMsgCount = useRef(0);
+  const prevLastMsgId = useRef(null);
   const inputRef = useRef(null);
+  const presenceUnsubRef = useRef(null);
 
   // Redirect if not logged in
   useEffect(() => {
@@ -68,7 +78,7 @@ const Chat = () => {
     }
   }, [user, navigate]);
 
-  // Load chat rooms in real-time, sorted by newest message
+  // Load chat rooms in real-time, newest message first
   useEffect(() => {
     if (!user) return;
     const q = query(
@@ -95,6 +105,7 @@ const Chat = () => {
           }
         }
 
+        // Unread count for current user
         const unreadCount = data.unreadCount?.[user.uid] || 0;
         totalUnreadCount += unreadCount;
 
@@ -104,7 +115,8 @@ const Chat = () => {
           recipientName,
           recipientAvatar,
           unreadCount,
-          ...data
+          participants: data.participants,
+          ...data,
         });
       }
       setChatRooms(roomsData);
@@ -126,11 +138,12 @@ const Chat = () => {
         const cId = await getOrCreateChat(user.uid, targetUid);
         const uSnap = await getDoc(doc(db, 'users', targetUid));
         if (uSnap.exists()) {
-          setTargetProfile(uSnap.data());
+          setTargetProfile({ uid: targetUid, ...uSnap.data() });
           setActiveParticipants([user.uid, targetUid]);
         }
         setActiveChatId(cId);
         setSidebarVisible(false);
+        if (user) markChatAsRead(cId, user.uid);
       } catch (e) {
         console.error(e);
         toast.error('Gagal memuat ruang obrolan.');
@@ -139,9 +152,28 @@ const Chat = () => {
     initRoom();
   }, [user, targetUid]);
 
+  // Subscribe to target user's REAL presence
+  useEffect(() => {
+    // Cleanup previous subscription
+    if (presenceUnsubRef.current) {
+      presenceUnsubRef.current();
+      presenceUnsubRef.current = null;
+    }
+    if (!targetProfile?.uid) {
+      setTargetPresence({ online: false, lastSeen: null });
+      return;
+    }
+    presenceUnsubRef.current = subscribeToPresence(targetProfile.uid, (presence) => {
+      setTargetPresence(presence);
+    });
+    return () => {
+      if (presenceUnsubRef.current) presenceUnsubRef.current();
+    };
+  }, [targetProfile?.uid]);
+
   // Listen to messages in active chat
   useEffect(() => {
-    if (!activeChatId) { setMessages([]); return; }
+    if (!activeChatId) { setMessages([]); prevMsgCount.current = 0; prevLastMsgId.current = null; return; }
 
     const q = query(
       collection(db, 'chats', activeChatId, 'messages'),
@@ -151,36 +183,47 @@ const Chat = () => {
       setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     });
 
-    // Mark as read when opening
     if (user) markChatAsRead(activeChatId, user.uid);
-
     return unsubscribe;
   }, [activeChatId, user]);
 
-  // Track scroll position
+  // Track scroll position — update BEFORE re-render
   const handleScroll = useCallback(() => {
     const el = messagesBodyRef.current;
     if (!el) return;
-    isUserNearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    wasNearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
   }, []);
 
-  // Smart auto-scroll
+  // Smart auto-scroll — ONLY on new messages from self or when near bottom
   useEffect(() => {
     const currentLength = messages.length;
-    const prevLength = prevMessagesLength.current;
-    const wasAdded = currentLength > prevLength;
-    if (wasAdded) {
+    const prevLength = prevMsgCount.current;
+    const currentLastId = messages[messages.length - 1]?.id;
+    const prevLastId = prevLastMsgId.current;
+
+    // A new message was added (not just an update or deletion)
+    const newMessageAdded = currentLength > prevLength;
+
+    if (newMessageAdded) {
       const lastMsg = messages[messages.length - 1];
-      const isOwn = lastMsg && lastMsg.senderId === user?.uid;
-      if (isOwn || isUserNearBottom.current) {
-        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 50);
+      const isOwnMsg = lastMsg?.senderId === user?.uid;
+
+      // Scroll only if: it's own message OR user is near bottom
+      if (isOwnMsg || wasNearBottom.current) {
+        // Use requestAnimationFrame to avoid layout thrash
+        requestAnimationFrame(() => {
+          const el = messagesBodyRef.current;
+          if (el) {
+            el.scrollTop = el.scrollHeight;
+          }
+        });
       }
+      // Mark as read on new arrival
+      if (activeChatId && user) markChatAsRead(activeChatId, user.uid);
     }
-    prevMessagesLength.current = currentLength;
-    // Mark as read when new message arrives in active chat
-    if (wasAdded && activeChatId && user) {
-      markChatAsRead(activeChatId, user.uid);
-    }
+
+    prevMsgCount.current = currentLength;
+    prevLastMsgId.current = currentLastId;
   }, [messages, user, activeChatId]);
 
   const handleDeleteMessage = async (messageId) => {
@@ -225,12 +268,19 @@ const Chat = () => {
   };
 
   const selectRoom = async (room) => {
+    // Prevent scroll flash: mark near bottom so it will scroll to bottom on open
+    wasNearBottom.current = true;
+    prevMsgCount.current = 0;
+
     setActiveChatId(room.id);
     setActiveParticipants(room.participants || [user.uid, room.recipientUid]);
-    setTargetProfile({ displayName: room.recipientName, avatar: room.recipientAvatar, uid: room.recipientUid });
+    setTargetProfile({
+      uid: room.recipientUid,
+      displayName: room.recipientName,
+      avatar: room.recipientAvatar,
+    });
     navigate(`/chat?uid=${room.recipientUid}`, { replace: true });
     setSidebarVisible(false);
-    // Mark as read
     if (user) markChatAsRead(room.id, user.uid);
   };
 
@@ -238,6 +288,13 @@ const Chat = () => {
   const filteredRooms = chatRooms.filter(r =>
     r.recipientName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Online status display
+  const statusText = targetPresence.online
+    ? 'Online'
+    : targetPresence.lastSeen
+      ? `Terakhir online: ${formatLastSeen(targetPresence.lastSeen)}`
+      : 'Offline';
 
   return (
     <div className="chat-page">
@@ -283,27 +340,36 @@ const Chat = () => {
               filteredRooms.map(room => {
                 const isActive = activeChatId === room.id;
                 const unread = room.unreadCount || 0;
+                const isLastMsgMine = room.lastSenderId === user?.uid;
                 return (
                   <button
                     key={room.id}
                     onClick={() => selectRoom(room)}
-                    className={`chat-page__room-btn ${isActive ? 'active' : ''} ${unread > 0 ? 'has-unread' : ''}`}
+                    className={`chat-page__room-btn ${isActive ? 'active' : ''} ${unread > 0 && !isLastMsgMine ? 'has-unread' : ''}`}
                   >
                     <div className="chat-page__room-avatar">
                       {room.recipientAvatar
                         ? <img src={room.recipientAvatar} alt="" />
                         : <User size={16} />
                       }
-                      {unread > 0 && <span className="chat-room-unread-dot" />}
+                      {/* Unread dot — only when RECIPIENT sent unread messages */}
+                      {unread > 0 && !isLastMsgMine && <span className="chat-room-unread-dot" />}
                     </div>
                     <div className="chat-page__room-info">
                       <div className="chat-room-name-row">
-                        <strong style={{ color: unread > 0 ? 'var(--color-text)' : undefined }}>{room.recipientName}</strong>
+                        <strong style={{ color: (unread > 0 && !isLastMsgMine) ? 'var(--color-text)' : undefined }}>
+                          {room.recipientName}
+                        </strong>
                         <span className="chat-room-time">{formatRoomTime(room.updatedAt)}</span>
                       </div>
                       <div className="chat-room-preview-row">
-                        <p className={unread > 0 ? 'unread-preview' : ''}>{room.lastMessage || 'Kirim pesan pertama...'}</p>
-                        {unread > 0 && <span className="chat-room-count">{unread > 9 ? '9+' : unread}</span>}
+                        <p className={(unread > 0 && !isLastMsgMine) ? 'unread-preview' : ''}>
+                          {isLastMsgMine ? `Kamu: ${room.lastMessage}` : (room.lastMessage || 'Kirim pesan pertama...')}
+                        </p>
+                        {/* Badge kuantitas pesan di kolom pengirim (recipient side) */}
+                        {unread > 0 && !isLastMsgMine && (
+                          <span className="chat-room-count">{unread > 9 ? '9+' : unread}</span>
+                        )}
                       </div>
                     </div>
                   </button>
@@ -320,7 +386,15 @@ const Chat = () => {
               {/* Header */}
               <div className="chat-page__window-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <button className="chat-page__back-btn" onClick={() => { setSidebarVisible(true); setActiveChatId(null); navigate('/chat', { replace: true }); }}>
+                  <button
+                    className="chat-page__back-btn"
+                    onClick={() => {
+                      setSidebarVisible(true);
+                      setActiveChatId(null);
+                      setTargetProfile(null);
+                      navigate('/chat', { replace: true });
+                    }}
+                  >
                     <ArrowLeft size={16} />
                   </button>
                   <div className="chat-page__window-avatar">
@@ -331,8 +405,9 @@ const Chat = () => {
                   </div>
                   <div>
                     <h4>{targetProfile.displayName || 'Pengguna'}</h4>
-                    <p className="chat-page__user-status">
-                      <span className="chat-status-dot" /> Online
+                    <p className={`chat-page__user-status ${targetPresence.online ? 'online' : 'offline'}`}>
+                      <span className={`chat-status-dot ${targetPresence.online ? 'online' : 'offline'}`} />
+                      {statusText}
                     </p>
                   </div>
                 </div>
@@ -357,14 +432,20 @@ const Chat = () => {
                     <p>Tindakan ini tidak bisa dibatalkan.</p>
                     <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 12 }}>
                       <button className="btn btn-ghost btn-sm" onClick={() => setShowClearConfirm(false)}>Batal</button>
-                      <button className="btn btn-sm" style={{ background: '#ef4444', color: '#fff', border: 'none' }} onClick={handleClearChat}>Hapus Semua</button>
+                      <button className="btn btn-sm" style={{ background: '#ef4444', color: '#fff', border: 'none' }} onClick={handleClearChat}>
+                        Hapus Semua
+                      </button>
                     </div>
                   </div>
                 </div>
               )}
 
               {/* Messages Body */}
-              <div className="chat-page__messages-body" ref={messagesBodyRef} onScroll={handleScroll}>
+              <div
+                className="chat-page__messages-body"
+                ref={messagesBodyRef}
+                onScroll={handleScroll}
+              >
                 {messages.length === 0 && (
                   <div className="chat-empty-messages">
                     <MessageSquare size={36} style={{ opacity: 0.3 }} />
@@ -374,11 +455,13 @@ const Chat = () => {
                 {messages.map((msg, idx) => {
                   const isOwn = msg.senderId === user.uid;
                   const prevMsg = messages[idx - 1];
-                  const showTime = !prevMsg || (msg.createdAt && prevMsg.createdAt &&
-                    Math.abs((msg.createdAt?.seconds || 0) - (prevMsg.createdAt?.seconds || 0)) > 300);
+                  const showTimeDivider = !prevMsg || (
+                    msg.createdAt && prevMsg.createdAt &&
+                    Math.abs((msg.createdAt?.seconds || 0) - (prevMsg.createdAt?.seconds || 0)) > 300
+                  );
                   return (
                     <div key={msg.id}>
-                      {showTime && msg.createdAt && (
+                      {showTimeDivider && msg.createdAt && (
                         <div className="chat-time-divider">
                           {formatMsgTime(msg.createdAt)}
                         </div>
@@ -402,7 +485,7 @@ const Chat = () => {
                     </div>
                   );
                 })}
-                <div ref={messagesEndRef} />
+                <div ref={messagesEndRef} style={{ height: 1 }} />
               </div>
 
               {/* Emoji Picker */}
@@ -435,6 +518,7 @@ const Chat = () => {
                   onKeyDown={handleKeyDown}
                   className="chat-page__input-field"
                   maxLength={1000}
+                  autoComplete="off"
                 />
                 <button
                   type="submit"

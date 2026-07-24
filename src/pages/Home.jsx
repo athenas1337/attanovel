@@ -2,12 +2,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  BookOpen, PenLine, Star, TrendingUp, Sparkles,
-  Crown, ChevronRight, Eye, Heart, Bookmark, Clock, Flame
+  BookOpen, PenLine, ChevronRight, Crown, Flame, Sparkles,
+  Star, Heart, Eye, Clock, Zap
 } from 'lucide-react';
-import { getPublishedNovels } from '../firebase/novels';
-import { useAuth } from '../context/AuthContext';
+import { getPublishedNovels, getNovelsByIds } from '../firebase/novels';
 import { getRecentlyViewed } from '../hooks/useRecentlyViewed';
+import { useAuth } from '../context/AuthContext';
 import './Home.css';
 
 const GENRES = ['Semua', 'Fantasy', 'Romance', 'Action', 'Mystery', 'Horror', 'Sci-Fi', 'Drama'];
@@ -63,6 +63,7 @@ const Home = ({ onOpenAuth }) => {
   const [novels, setNovels] = useState([]);
   const [activeGenre, setActiveGenre] = useState('Semua');
   const [loading, setLoading] = useState(true);
+  // Recently viewed: IDs from localStorage, but data fetched fresh from Firestore
   const [recentlyViewed, setRecentlyViewed] = useState([]);
   const navigate = useNavigate();
 
@@ -71,6 +72,16 @@ const Home = ({ onOpenAuth }) => {
       try {
         const data = await getPublishedNovels(30);
         setNovels(data);
+
+        // Fetch fresh recently viewed novels from Firestore
+        const rvIds = getRecentlyViewed().map(n => n.id).filter(Boolean);
+        if (rvIds.length > 0) {
+          // Match fresh data from already-fetched novels first
+          const freshRecent = rvIds
+            .map(id => data.find(n => n.id === id))
+            .filter(Boolean);
+          setRecentlyViewed(freshRecent);
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -78,7 +89,6 @@ const Home = ({ onOpenAuth }) => {
       }
     };
     load();
-    setRecentlyViewed(getRecentlyViewed());
   }, []);
 
   const filtered = activeGenre === 'Semua'
@@ -100,7 +110,7 @@ const Home = ({ onOpenAuth }) => {
         <div className="container home__hero-inner">
           <div className="home__hero-badge animate-fadeInUp">
             <Crown size={14} />
-            Platform Novel Terbaik Indonesia
+            Tulis. Terbitkan. Mendunia.
           </div>
           <h1 className="home__hero-title animate-fadeInUp" style={{ animationDelay: '0.1s' }}>
             Tuliskan Dunia

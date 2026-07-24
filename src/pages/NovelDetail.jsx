@@ -1,5 +1,5 @@
 // src/pages/NovelDetail.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   BookOpen, Eye, Heart, Bookmark, Share2, User,
@@ -10,6 +10,9 @@ import { getNovel, incrementViews, toggleNovelLike, toggleNovelBookmark } from '
 import { getChapters } from '../firebase/chapters';
 import { useAuth } from '../context/AuthContext';
 import { addRecentlyViewed } from '../hooks/useRecentlyViewed';
+import { logActivity } from '../firebase/activity';
+import { isDeveloper } from '../firebase/redeem';
+import { deleteNovel } from '../firebase/novels';
 import ShareDropdown from '../components/ui/ShareDropdown';
 import toast from 'react-hot-toast';
 import './NovelDetail.css';
@@ -31,6 +34,8 @@ const NovelDetail = ({ onOpenAuth }) => {
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
+  const likeProcessing = useRef(false);
+  const bookmarkProcessing = useRef(false);
 
   useEffect(() => {
     const load = async () => {
@@ -84,45 +89,61 @@ const NovelDetail = ({ onOpenAuth }) => {
 
   const handleLike = async () => {
     if (!user) { onOpenAuth('login'); return; }
+    // Debounce: prevent double-click
+    if (likeProcessing.current) return;
+    likeProcessing.current = true;
+    const wasLiked = liked;
     try {
-      await toggleNovelLike(novelId, user.uid, liked);
+      await toggleNovelLike(novelId, user.uid, wasLiked);
       setNovel(n => ({
         ...n,
-        likes: (n.likes || 0) + (liked ? -1 : 1)
+        likes: (n.likes || 0) + (wasLiked ? -1 : 1)
       }));
-      setLiked(!liked);
+      setLiked(!wasLiked);
 
       if (userProfile) {
-        if (liked) {
+        if (wasLiked) {
           userProfile.likedNovels = (userProfile.likedNovels || []).filter(id => id !== novelId);
         } else {
           userProfile.likedNovels = [...(userProfile.likedNovels || []), novelId];
+          // Log activity
+          logActivity(user.uid, 'like', { novelId, novelTitle: novel?.title });
         }
       }
 
-      toast.success(liked ? 'Batal menyukai novel' : 'Novel disukai! ❤️');
+      toast.success(wasLiked ? 'Batal menyukai novel' : 'Novel disukai! ❤️');
     } catch (e) {
       toast.error('Gagal memproses likes.');
+    } finally {
+      // Release lock after 800ms — prevents very fast double-click
+      setTimeout(() => { likeProcessing.current = false; }, 800);
     }
   };
 
   const handleBookmark = async () => {
     if (!user) { onOpenAuth('login'); return; }
+    // Debounce: prevent double-click
+    if (bookmarkProcessing.current) return;
+    bookmarkProcessing.current = true;
+    const wasBookmarked = bookmarked;
     try {
-      await toggleNovelBookmark(novelId, user.uid, bookmarked);
-      setBookmarked(!bookmarked);
+      await toggleNovelBookmark(novelId, user.uid, wasBookmarked);
+      setBookmarked(!wasBookmarked);
 
       if (userProfile) {
-        if (bookmarked) {
+        if (wasBookmarked) {
           userProfile.bookmarkedNovels = (userProfile.bookmarkedNovels || []).filter(id => id !== novelId);
         } else {
           userProfile.bookmarkedNovels = [...(userProfile.bookmarkedNovels || []), novelId];
+          logActivity(user.uid, 'bookmark', { novelId, novelTitle: novel?.title });
         }
       }
 
-      toast.success(bookmarked ? 'Bookmark dihapus' : 'Novel di-bookmark! 🔖');
+      toast.success(wasBookmarked ? 'Bookmark dihapus' : 'Novel di-bookmark! 🔖');
     } catch (e) {
       toast.error('Gagal memproses bookmark.');
+    } finally {
+      setTimeout(() => { bookmarkProcessing.current = false; }, 800);
     }
   };
 
@@ -271,7 +292,28 @@ const NovelDetail = ({ onOpenAuth }) => {
                   <Edit size={16} /> Edit Novel
                 </Link>
               )}
+              {/* Developer Mode: Force Delete any novel */}
+              {isDeveloper() && !isAuthor && (
+                <button
+                  className="btn btn-sm"
+                  style={{ background: '#ef4444', color: '#fff', border: 'none', opacity: 0.85 }}
+                  onClick={async () => {
+                    if (!confirm(`[DEV] Hapus paksa novel "${novel.title}"?`)) return;
+                    try {
+                      await deleteNovel(novelId);
+                      toast.success('[DEV] Novel berhasil dihapus secara paksa.');
+                      navigate('/');
+                    } catch (e) {
+                      toast.error('Gagal menghapus: ' + e.message);
+                    }
+                  }}
+                  title="[Developer] Force Delete Novel"
+                >
+                  🔧 DEV DELETE
+                </button>
+              )}
             </div>
+
           </div>
         </div>
       </div>

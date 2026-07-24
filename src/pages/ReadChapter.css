@@ -557,3 +557,74 @@
   .read__toc-btn span { display: none; }
   .read__back-title { display: none; }
 }
+
+/* ══ Comment Action Row ═════════════════════════════ */
+.read__comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  flex-wrap: wrap;
+}
+
+/* Like button on comments */
+.read__comment-like-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  transition: all 0.15s;
+}
+.read__comment-like-btn:hover {
+  background: rgba(239,68,68,0.1);
+  color: #ef4444;
+}
+.read__comment-like-btn.liked {
+  color: #ef4444;
+  background: rgba(239,68,68,0.1);
+}
+
+/* Replies collapse toggle (YouTube-style) */
+.read__replies-toggle {
+  background: none;
+  border: none;
+  color: var(--color-primary-light);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  transition: background 0.15s;
+  font-weight: 600;
+}
+.read__replies-toggle:hover {
+  background: rgba(139,92,246,0.1);
+}
+
+/* Report / Hide action buttons */
+.read__comment-action-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s;
+}
+.read__comment-action-btn:hover { color: #ef4444; }
+
+/* Spinning animation for refresh */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spinning { animation: spin 1s linear infinite; }

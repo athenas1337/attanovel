@@ -530,3 +530,74 @@
   .chat-page__sidebar.visible { display: flex; }
   .chat-page__back-btn { display: flex !important; }
 }
+
+/* ── Online/Offline Status Dot ───────────────────────── */
+.chat-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.chat-status-dot.online {
+  background: #10b981;
+  box-shadow: 0 0 5px #10b981;
+  animation: pulse-green 2s infinite;
+}
+.chat-status-dot.offline {
+  background: rgba(255,255,255,0.25);
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 4px #10b981; }
+  50% { box-shadow: 0 0 10px #10b981; }
+}
+
+/* ── Online status text ────────────────────────────── */
+.chat-page__user-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.75rem;
+  margin: 0;
+}
+.chat-page__user-status.online { color: #10b981; }
+.chat-page__user-status.offline { color: var(--color-text-muted); }
+
+/* ── Unread dot on avatar in room list ──────────────── */
+.chat-room-unread-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid rgba(11,8,23,0.8);
+}
+
+/* ── Spinning animation ──────────────────────────────── */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+.spinning { animation: spin 1s linear infinite; }
+
+/* ── Time divider between messages ─────────────────── */
+.chat-time-divider {
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  padding: 8px 0 4px;
+  opacity: 0.6;
+}
+
+/* ── Message meta (checkmarks) ──────────────────────── */
+.chat-msg-meta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  font-size: 0.7rem;
+  color: rgba(255,255,255,0.5);
+  margin-top: 2px;
+}

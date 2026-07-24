@@ -14,20 +14,20 @@
 
 .settings-page__layout {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: 260px 1fr;
   gap: var(--space-xl);
   align-items: flex-start;
 }
 
-/* Sidebar Settings */
+/* ── Sidebar ──────────────────────────── */
 .settings-page__sidebar {
   padding: var(--space-xl);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: var(--space-xl);
+  gap: 0;
   border-radius: var(--radius-lg);
+  position: sticky;
+  top: 80px;
 }
 
 .settings-page__user-info {
@@ -35,20 +35,24 @@
   flex-direction: column;
   align-items: center;
   gap: var(--space-md);
+  text-align: center;
+  padding-bottom: var(--space-lg);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  margin-bottom: var(--space-md);
 }
 
 .settings-page__avatar-container {
   position: relative;
-  width: 110px;
-  height: 110px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   border: 3px solid var(--color-primary);
   background: var(--gradient-card);
-  box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.35);
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .settings-page__avatar {
@@ -66,8 +70,8 @@
   position: absolute;
   bottom: 0;
   right: 0;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: var(--gradient-gold);
   border: none;
@@ -79,45 +83,40 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   transition: transform var(--transition-fast);
 }
-
-.settings-page__camera-btn:hover {
-  transform: scale(1.1);
-}
+.settings-page__camera-btn:hover { transform: scale(1.1); }
 
 .settings-page__user-info h3 {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--color-text);
-  margin-bottom: 2px;
+  margin: 0;
 }
 
 .settings-page__user-info p {
-  font-size: 0.85rem;
+  font-size: 0.78rem;
   color: var(--color-text-muted);
+  margin: 0;
 }
 
-.settings-page__side-actions {
-  width: 100%;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: var(--space-lg);
-}
-
-/* Form Settings */
+/* ── Form / Main Panel ────────────────── */
 .settings-page__form {
   padding: var(--space-2xl);
   border-radius: var(--radius-lg);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xl);
+  min-height: 400px;
 }
 
 .settings-page__section h2 {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--color-gold);
   margin-bottom: var(--space-lg);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+}
+
+.settings-page__section h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: var(--space-md);
 }
 
 .settings-page__section-divider {
@@ -125,14 +124,23 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
+.settings-page__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding-top: var(--space-lg);
+  flex-wrap: wrap;
+}
+
 .settings-page__lang-buttons {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  display: flex;
   gap: var(--space-md);
+  flex-wrap: wrap;
 }
 
 .settings-page__lang-btn {
-  padding: 14px;
+  padding: 14px 20px;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   background: rgba(255, 255, 255, 0.03);
@@ -141,15 +149,11 @@
   font-weight: 600;
   cursor: pointer;
   transition: all var(--transition-normal);
-  text-align: center;
 }
-
 .settings-page__lang-btn:hover {
   border-color: var(--color-primary-light);
   color: var(--color-primary-light);
-  background: rgba(139, 92, 246, 0.05);
 }
-
 .settings-page__lang-btn.active {
   background: var(--gradient-violet);
   color: white;
@@ -157,15 +161,22 @@
   box-shadow: 0 4px 15px rgba(109, 40, 217, 0.4);
 }
 
-.settings-page__actions {
-  display: flex;
-  justify-content: flex-end;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
-  padding-top: var(--space-lg);
+/* Danger zone */
+.btn-danger {
+  background: rgba(239,68,68,0.15);
+  color: #ef4444;
+  border: 1px solid rgba(239,68,68,0.3);
+}
+.btn-danger:hover {
+  background: rgba(239,68,68,0.25);
+  border-color: #ef4444;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .settings-page__layout {
     grid-template-columns: 1fr;
+  }
+  .settings-page__sidebar {
+    position: static;
   }
 }
