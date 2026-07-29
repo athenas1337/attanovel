@@ -10,26 +10,101 @@
     <meta property="og:description" content="Tulis dan baca novel di AttaNovel. Platform terbaik untuk para penulis dan pembaca." />
     <meta property="og:type" content="website" />
     <meta name="theme-color" content="#6d28d9" />
-    <title>AttaNovel - Platform Menulis & Membaca Novel</title>
+    <title>AttaNovel - Platform Menulis &amp; Membaca Novel</title>
     <!-- Preconnect fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <!-- GitHub Pages SPA redirect decode -->
+    <!-- GitHub Pages SPA redirect decode: restores paths from query string -->
     <script type="text/javascript">
       (function(l) {
         if (l.search[1] === '/' ) {
-          var decoded = l.search.slice(1).split('&').map(function(s) { 
-            return s.replace(/~and~/g, '&')
+          var decoded = l.search.slice(1).split('&').map(function(s) {
+            return s.replace(/~and~/g, '&');
           }).join('?');
           window.history.replaceState(null, null,
             l.pathname.slice(0, -1) + decoded + l.hash
           );
         }
-      }(window.location))
+      }(window.location));
     </script>
+    <!-- Inline loading screen — visible until React mounts -->
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; }
+      body {
+        background: #0b0817;
+        color: #ede9fe;
+        font-family: Inter, 'Segoe UI', sans-serif;
+      }
+      #root { min-height: 100vh; }
+      /* Splash screen shown before React loads */
+      #splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: #0b0817;
+        z-index: 9999;
+        gap: 16px;
+        transition: opacity 0.4s ease;
+      }
+      #splash .splash-logo {
+        font-size: 2rem;
+        font-weight: 900;
+        background: linear-gradient(135deg, #a78bfa, #f59e0b);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.02em;
+      }
+      #splash .splash-sub {
+        font-size: 0.85rem;
+        color: #7c6fa0;
+      }
+      #splash .splash-spinner {
+        width: 36px;
+        height: 36px;
+        border: 3px solid rgba(139,92,246,0.2);
+        border-top-color: #8b5cf6;
+        border-radius: 50%;
+        animation: splash-spin 0.8s linear infinite;
+      }
+      @keyframes splash-spin { to { transform: rotate(360deg); } }
+    </style>
   </head>
   <body>
+    <!-- Splash screen that hides after React mounts -->
+    <div id="splash">
+      <div class="splash-logo">📖 AttaNovel</div>
+      <div class="splash-sub">Memuat platform...</div>
+      <div class="splash-spinner"></div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <!-- Hide splash once React takes over -->
+    <script>
+      // Remove splash after React has had time to render
+      window.addEventListener('DOMContentLoaded', function() {
+        // Use requestAnimationFrame to detect when React has painted
+        var checkReady = function() {
+          var root = document.getElementById('root');
+          if (root && root.children.length > 0) {
+            var splash = document.getElementById('splash');
+            if (splash) {
+              splash.style.opacity = '0';
+              setTimeout(function() {
+                if (splash.parentNode) splash.parentNode.removeChild(splash);
+              }, 400);
+            }
+          } else {
+            requestAnimationFrame(checkReady);
+          }
+        };
+        requestAnimationFrame(checkReady);
+      });
+    </script>
   </body>
 </html>

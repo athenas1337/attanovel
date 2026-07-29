@@ -45,12 +45,23 @@ import ActivityLog from './pages/ActivityLog';
 
 import './styles/globals.css';
 
-// Protected Route Component
+// Protected Route Component — waits for Firebase auth before deciding
 const ProtectedRoute = ({ children }) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  // Don't redirect until Firebase has confirmed auth state
+  if (loading) return (
+    <div style={{
+      minHeight: '60vh', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', flexDirection: 'column', gap: 16,
+    }}>
+      <div className="spinner spinner-lg" />
+      <p style={{ color: 'var(--color-text-muted)', fontSize: '0.9rem' }}>Memverifikasi...</p>
+    </div>
+  );
   if (!user) return <Navigate to="/" replace />;
   return children;
 };
+
 
 // Layout wrapper (with Navbar + Footer)
 const WithLayout = ({ children, onOpenAuth }) => (
