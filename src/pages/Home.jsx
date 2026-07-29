@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   BookOpen, PenLine, ChevronRight, Crown, Flame, Sparkles,
-  Star, Heart, Eye, Clock, Zap
+  Star, Heart, Eye, Clock, Zap, TrendingUp
 } from 'lucide-react';
+
 import { getPublishedNovels, getNovelsByIds } from '../firebase/novels';
 import { getRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { useAuth } from '../context/AuthContext';
