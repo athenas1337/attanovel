@@ -6,13 +6,12 @@ import {
   Calendar, Tag, ChevronRight, Lock, Clock, Edit,
   FileText, TrendingUp, Star, Zap, BarChart2
 } from 'lucide-react';
-import { getNovel, incrementViews, toggleNovelLike, toggleNovelBookmark } from '../firebase/novels';
+import { getNovel, incrementViews, toggleNovelLike, toggleNovelBookmark, deleteNovel } from '../firebase/novels';
 import { getChapters } from '../firebase/chapters';
 import { useAuth } from '../context/AuthContext';
 import { addRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { logActivity } from '../firebase/activity';
 import { isDeveloper } from '../firebase/redeem';
-import { deleteNovel } from '../firebase/novels';
 import ShareDropdown from '../components/ui/ShareDropdown';
 import toast from 'react-hot-toast';
 import './NovelDetail.css';

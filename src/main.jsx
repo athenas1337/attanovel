@@ -3,12 +3,11 @@ import { StrictMode, Component } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
 
-// Global Error Boundary — catches any uncaught React render errors
-// Prevents total white/black screen on unexpected crash
+// Global Error Boundary — shows the actual error message so we can debug
 class ErrorBoundary extends Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, info: null };
   }
 
   static getDerivedStateFromError(error) {
@@ -16,16 +15,14 @@ class ErrorBoundary extends Component {
   }
 
   componentDidCatch(error, info) {
-    console.error('[AttaNovel] Uncaught render error:', error, info);
+    console.error('[AttaNovel] Render error:', error);
+    console.error('[AttaNovel] Component stack:', info?.componentStack);
+    this.setState({ info });
   }
-
-  handleReload = () => {
-    this.setState({ hasError: false, error: null });
-    window.location.reload();
-  };
 
   render() {
     if (this.state.hasError) {
+      const err = this.state.error;
       return (
         <div style={{
           minHeight: '100vh',
@@ -45,38 +42,57 @@ class ErrorBoundary extends Component {
             AttaNovel
           </h1>
           <p style={{ color: '#7c6fa0', margin: 0, maxWidth: 380, lineHeight: 1.6 }}>
-            Terjadi kesalahan yang tidak terduga. Silakan muat ulang halaman.
+            Terjadi kesalahan. Silakan muat ulang halaman.
           </p>
-          {import.meta.env.DEV && this.state.error && (
-            <pre style={{
-              background: 'rgba(239,68,68,0.1)',
-              border: '1px solid rgba(239,68,68,0.3)',
-              borderRadius: '8px',
-              padding: '12px',
-              fontSize: '0.75rem',
-              color: '#fca5a5',
-              maxWidth: '90vw',
-              overflowX: 'auto',
-              textAlign: 'left',
-            }}>
-              {this.state.error.toString()}
-            </pre>
-          )}
-          <button
-            onClick={this.handleReload}
-            style={{
-              background: 'linear-gradient(135deg, #6d28d9, #8b5cf6)',
-              color: '#fff',
-              border: 'none',
-              padding: '12px 28px',
-              borderRadius: '12px',
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-              fontWeight: '600',
-            }}
-          >
-            🔄 Muat Ulang
-          </button>
+          {/* Show error details — helps diagnose production issues */}
+          <pre style={{
+            background: 'rgba(239,68,68,0.08)',
+            border: '1px solid rgba(239,68,68,0.25)',
+            borderRadius: '8px',
+            padding: '14px 16px',
+            fontSize: '0.72rem',
+            color: '#fca5a5',
+            maxWidth: '90vw',
+            overflowX: 'auto',
+            textAlign: 'left',
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-word',
+          }}>
+            {err?.toString?.() || 'Unknown error'}
+            {'\n\n'}
+            {this.state.info?.componentStack?.split('\n').slice(0, 8).join('\n')}
+          </pre>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                background: 'linear-gradient(135deg, #6d28d9, #8b5cf6)',
+                color: '#fff',
+                border: 'none',
+                padding: '12px 28px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+              }}
+            >
+              🔄 Muat Ulang
+            </button>
+            <button
+              onClick={() => { window.location.href = '/attanovel/'; }}
+              style={{
+                background: 'rgba(139,92,246,0.15)',
+                color: '#a78bfa',
+                border: '1px solid rgba(139,92,246,0.3)',
+                padding: '12px 28px',
+                borderRadius: '12px',
+                cursor: 'pointer',
+                fontSize: '0.9rem',
+              }}
+            >
+              🏠 Ke Beranda
+            </button>
+          </div>
         </div>
       );
     }
