@@ -12,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 import { addRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { logActivity } from '../firebase/activity';
 import { isAdmin } from '../firebase/admin';
+import { createNotification } from '../firebase/notifications';
 import ShareDropdown from '../components/ui/ShareDropdown';
 import toast from 'react-hot-toast';
 import './NovelDetail.css';
@@ -141,6 +142,16 @@ const NovelDetail = ({ onOpenAuth }) => {
           userProfile.likedNovels = [...(userProfile.likedNovels || []), novelId];
           // Log activity
           logActivity(user.uid, 'like', { novelId, novelTitle: novel?.title });
+          // Notify author (unless you liked your own novel)
+          if (novel?.authorId && novel.authorId !== user.uid) {
+            createNotification(novel.authorId, 'like', {
+              fromUserId: user.uid,
+              fromUserName: userProfile?.displayName || 'Seseorang',
+              fromUserAvatar: userProfile?.avatar || '',
+              novelId,
+              novelTitle: novel?.title,
+            });
+          }
         }
       }
 
@@ -148,7 +159,6 @@ const NovelDetail = ({ onOpenAuth }) => {
     } catch (e) {
       toast.error('Gagal memproses likes.');
     } finally {
-      // Release lock after 800ms — prevents very fast double-click
       setTimeout(() => { likeProcessing.current = false; }, 800);
     }
   };

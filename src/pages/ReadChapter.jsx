@@ -17,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { logActivity } from '../firebase/activity';
 import { isAdmin } from '../firebase/admin';
 import { setReadingProgress } from '../hooks/useReadingProgress';
+import { createNotification } from '../firebase/notifications';
 import toast from 'react-hot-toast';
 import './ReadChapter.css';
 
@@ -477,6 +478,19 @@ const ReadChapter = ({ onOpenAuth }) => {
       logActivity(user.uid, 'comment', {
         novelId, novelTitle: novel?.title, chapterId, chapterTitle: chapter?.title,
       });
+      // Notify author if not commenting on own novel
+      if (novel?.authorId && novel.authorId !== user.uid) {
+        createNotification(novel.authorId, 'comment', {
+          fromUserId: user.uid,
+          fromUserName: userProfile?.displayName || 'Pengguna',
+          fromUserAvatar: userProfile?.avatar || '',
+          novelId,
+          novelTitle: novel?.title,
+          chapterId,
+          chapterTitle: chapter?.title,
+          commentText: newComment.trim().slice(0, 100),
+        });
+      }
       toast.success('Komentar berhasil dikirim!');
     } catch (e) {
       toast.error('Gagal mengirim komentar.');
