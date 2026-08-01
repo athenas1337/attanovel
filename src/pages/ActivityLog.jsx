@@ -49,31 +49,61 @@ const ActivityLog = () => {
   const [filter, setFilter] = useState('Semua');
   const [refreshing, setRefreshing] = useState(false);
 
+  // Real-time listener for activity log
   useEffect(() => {
-    if (!user) {
-      navigate('/');
-      return;
-    }
-    loadActivities();
+    if (!user) return;
+    setLoading(true);
+
+    // Try with compound query (requires Firestore index)
+    const tryWithIndex = () => {
+      const q = query(
+        collection(db, 'activity_logs'),
+        where('userId', '==', user.uid),
+        orderBy('createdAt', 'desc'),
+        limit(100)
+      );
+      return onSnapshot(q, (snap) => {
+        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setActivities(data);
+        setLoading(false);
+      }, (err) => {
+        // Index not ready — fallback to client-side sort
+        console.warn('Activity index not ready, using fallback:', err.code);
+        tryWithoutIndex();
+      });
+    };
+
+    // Fallback: no orderBy (no index required), sort client-side
+    const tryWithoutIndex = () => {
+      const q = query(
+        collection(db, 'activity_logs'),
+        where('userId', '==', user.uid),
+        limit(100)
+      );
+      return onSnapshot(q, (snap) => {
+        const data = snap.docs
+          .map(d => ({ id: d.id, ...d.data() }))
+          .sort((a, b) => {
+            const ta = a.createdAt?.seconds || 0;
+            const tb = b.createdAt?.seconds || 0;
+            return tb - ta;
+          });
+        setActivities(data);
+        setLoading(false);
+      }, (err) => {
+        console.error('Activity log failed completely:', err);
+        setLoading(false);
+      });
+    };
+
+    const unsub = tryWithIndex();
+    return () => { try { unsub?.(); } catch {} };
   }, [user]);
 
-  const loadActivities = async () => {
-    setLoading(true);
-    try {
-      const data = await getUserActivity(user.uid, 100);
-      setActivities(data);
-    } catch (e) {
-      console.error('Failed to load activities:', e);
-      setActivities([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
+  const handleRefresh = () => {
+    // Real-time — no manual refresh needed, but give UX feedback
     setRefreshing(true);
-    await loadActivities();
-    setRefreshing(false);
+    setTimeout(() => setRefreshing(false), 1000);
   };
 
   const filtered = filter === 'Semua'

@@ -12,7 +12,7 @@ import { db } from '../firebase/config';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import { logoutUser } from '../firebase/auth';
-import { redeemCode, isDeveloper, deactivateDeveloper } from '../firebase/redeem';
+import { isAdmin } from '../firebase/admin';
 import toast from 'react-hot-toast';
 import './Settings.css';
 
@@ -22,7 +22,6 @@ const SECTION_IDS = [
   { id: 'notifications',  label: 'Notifikasi',           icon: <Bell size={15} /> },
   { id: 'privacy',        label: 'Privasi',              icon: <Shield size={15} /> },
   { id: 'language',       label: 'Bahasa',               icon: <Globe size={15} /> },
-  { id: 'redeem',         label: 'Kode Redeem',          icon: <Gift size={15} /> },
   { id: 'account',        label: 'Akun',                 icon: <Key size={15} /> },
 ];
 
@@ -60,10 +59,8 @@ const Settings = () => {
   const [profilePublic, setProfilePublic] = useState(true);
   const [showActivity, setShowActivity] = useState(true);
 
-  // Redeem
-  const [redeemInput, setRedeemInput] = useState('');
-  const [redeemLoading, setRedeemLoading] = useState(false);
-  const [devModeOn, setDevModeOn] = useState(isDeveloper());
+  // Admin check — based on email, no code needed
+  const userIsAdmin = isAdmin(user);
 
   // Danger zone
   const [deleteConfirm, setDeleteConfirm] = useState('');
@@ -164,28 +161,6 @@ const Settings = () => {
     } catch { toast.error('Gagal menyimpan.'); }
   };
 
-  const handleRedeem = async (e) => {
-    e.preventDefault();
-    if (!redeemInput.trim()) return;
-    setRedeemLoading(true);
-    // Small artificial delay for UX
-    await new Promise(r => setTimeout(r, 600));
-    const result = redeemCode(redeemInput.trim());
-    if (result.success) {
-      toast.success(result.message);
-      if (result.type === 'dev') setDevModeOn(true);
-    } else {
-      toast.error(result.message);
-    }
-    setRedeemInput('');
-    setRedeemLoading(false);
-  };
-
-  const handleDeactivateDev = () => {
-    deactivateDeveloper();
-    setDevModeOn(false);
-    toast.success('Mode Developer dinonaktifkan.');
-  };
 
   const handleLogout = async () => {
     await logoutUser();
@@ -244,9 +219,9 @@ const Settings = () => {
               </div>
               <h3>{displayName || 'Pengguna'}</h3>
               <p>{user?.email}</p>
-              {devModeOn && (
+              {userIsAdmin && (
                 <span style={{ display: 'inline-block', background: 'linear-gradient(135deg,#ef4444,#b91c1c)', color: '#fff', fontSize: '0.7rem', fontWeight: '700', padding: '2px 10px', borderRadius: '20px', marginTop: 6 }}>
-                  🔧 Mode Developer Aktif
+                  👑 Admin Website
                 </span>
               )}
             </div>
@@ -457,53 +432,45 @@ const Settings = () => {
               </div>
             )}
 
-            {/* ── REDEEM CODE ── */}
+            {/* ── ADMIN PANEL (for athenas1337@gmail.com) ── */}
             {activeSection === 'redeem' && (
               <div className="settings-page__section">
-                <h2>🎁 Kode Redeem</h2>
-                <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: 20 }}>
-                  Masukkan kode redeem untuk mengaktifkan fitur premium, VIP, atau mode khusus.
-                </p>
-
-                {devModeOn && (
-                  <div style={{
-                    padding: '12px 16px', borderRadius: 10, marginBottom: 16,
-                    background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
-                    display: 'flex', alignItems: 'center', gap: 10,
-                  }}>
-                    <div style={{ flex: 1 }}>
-                      <strong style={{ color: '#ef4444', fontSize: '0.88rem' }}>🔧 Mode Developer Aktif</strong>
-                      <p style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)', margin: '2px 0 0' }}>
-                        Kamu memiliki hak penuh atas semua konten platform.
-                      </p>
+                {userIsAdmin ? (
+                  <>
+                    <h2>👑 Panel Admin</h2>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: 20 }}>
+                      Anda memiliki hak admin penuh sebagai pemilik platform AttaNovel.
+                    </p>
+                    <div style={{ padding: '16px 20px', borderRadius: 12, background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)', marginBottom: 16 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                        <span style={{ fontSize: '1.5rem' }}>👑</span>
+                        <div>
+                          <strong style={{ color: '#ef4444', display: 'block' }}>Admin Aktif</strong>
+                          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Terdeteksi dari email: {user?.email}</span>
+                        </div>
+                      </div>
+                      <ul style={{ margin: 0, paddingLeft: 20, fontSize: '0.83rem', color: 'var(--color-text-muted)', lineHeight: 1.8 }}>
+                        <li>Hapus novel apapun dari platform</li>
+                        <li>Hapus bab dari novel manapun</li>
+                        <li>Hapus komentar dari novel manapun</li>
+                        <li>Akses panel admin lengkap</li>
+                        <li>Lihat konten draft semua pengguna</li>
+                      </ul>
                     </div>
-                    <button className="btn btn-sm btn-danger" onClick={handleDeactivateDev}>
-                      Nonaktifkan
-                    </button>
-                  </div>
+                    <a href="/attanovel/admin" className="btn btn-danger" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+                      🛡️ Buka Panel Admin
+                    </a>
+                  </>
+                ) : (
+                  <>
+                    <h2>ℹ️ Info Platform</h2>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>
+                      Panel ini hanya tersedia untuk administrator platform.
+                      Jika Anda memiliki pertanyaan, silakan hubungi admin melalui halaman
+                      <a href="/attanovel/support" style={{ color: 'var(--color-primary-light)', marginLeft: 4 }}>Bantuan</a>.
+                    </p>
+                  </>
                 )}
-
-                <form onSubmit={handleRedeem} style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-                  <input
-                    type="text"
-                    value={redeemInput}
-                    onChange={e => setRedeemInput(e.target.value)}
-                    placeholder="Masukkan kode redeem..."
-                    className="form-input"
-                    style={{ flex: 1, minWidth: 200 }}
-                    spellCheck={false}
-                    autoCorrect="off"
-                  />
-                  <button type="submit" className="btn btn-gold" disabled={redeemLoading || !redeemInput.trim()}>
-                    {redeemLoading ? <div className="spinner" /> : <><Gift size={15} /> Tukarkan</>}
-                  </button>
-                </form>
-
-                <div style={{ marginTop: 20, padding: 14, background: 'rgba(255,255,255,0.03)', borderRadius: 10, border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-                    💡 Kode redeem bersifat rahasia dan tidak bisa dibagikan ulang. Kode VIP akan tersedia di masa mendatang.
-                  </p>
-                </div>
               </div>
             )}
 

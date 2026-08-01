@@ -1,0 +1,78 @@
+/* src/pages/AdminPanel.css */
+.admin-panel {
+  min-height: 100vh;
+  padding: 2rem 0 4rem;
+}
+
+.admin-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.admin-panel__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  margin-bottom: 2rem;
+}
+
+.admin-panel__stat-card {
+  padding: 20px;
+  border-radius: 14px;
+  text-align: center;
+  transition: transform 0.2s;
+}
+
+.admin-panel__stat-card:hover {
+  transform: translateY(-3px);
+}
+
+.admin-panel__tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.admin-panel__search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  padding: 8px 16px;
+  margin-bottom: 1.2rem;
+}
+
+.admin-panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.admin-panel__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  transition: background 0.15s;
+}
+
+.admin-panel__row:hover {
+  background: rgba(255,255,255,0.04);
+}
+
+@media (max-width: 600px) {
+  .admin-panel__stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .admin-panel__row {
+    flex-wrap: wrap;
+  }
+}

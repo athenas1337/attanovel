@@ -42,6 +42,7 @@ import WriterGuide from './pages/WriterGuide';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import ActivityLog from './pages/ActivityLog';
+import AdminPanel from './pages/AdminPanel';
 
 import './styles/globals.css';
 
@@ -217,8 +218,18 @@ function AppRoutes() {
           </WithLayout>
         } />
 
+        {/* Admin Panel — guarded internally by isAdmin() */}
+        <Route path="/admin" element={
+          <WithLayout onOpenAuth={openAuth}>
+            <ProtectedRoute>
+              <AdminPanel />
+            </ProtectedRoute>
+          </WithLayout>
+        } />
+
         {/* 404 */}
         <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
 
       <Toaster

@@ -67,6 +67,7 @@ const Chat = () => {
   const wasNearBottom = useRef(true);
   const prevMsgCount = useRef(0);
   const prevLastMsgId = useRef(null);
+  const roomJustOpened = useRef(false); // flag: scroll to bottom once when room opens
   const inputRef = useRef(null);
   const presenceUnsubRef = useRef(null);
 
@@ -194,28 +195,30 @@ const Chat = () => {
     wasNearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 100;
   }, []);
 
-  // Smart auto-scroll — ONLY on new messages from self or when near bottom
+  // Smart auto-scroll — ONLY on new messages from self, or when near bottom, or first load
   useEffect(() => {
     const currentLength = messages.length;
     const prevLength = prevMsgCount.current;
     const currentLastId = messages[messages.length - 1]?.id;
-    const prevLastId = prevLastMsgId.current;
 
-    // A new message was added (not just an update or deletion)
     const newMessageAdded = currentLength > prevLength;
 
-    if (newMessageAdded) {
+    if (roomJustOpened.current && currentLength > 0) {
+      // First load after opening a room — scroll to bottom immediately
+      roomJustOpened.current = false;
+      requestAnimationFrame(() => {
+        const el = messagesBodyRef.current;
+        if (el) el.scrollTop = el.scrollHeight;
+      });
+    } else if (newMessageAdded) {
       const lastMsg = messages[messages.length - 1];
       const isOwnMsg = lastMsg?.senderId === user?.uid;
 
-      // Scroll only if: it's own message OR user is near bottom
+      // Scroll only if: it's own message OR user was near bottom
       if (isOwnMsg || wasNearBottom.current) {
-        // Use requestAnimationFrame to avoid layout thrash
         requestAnimationFrame(() => {
           const el = messagesBodyRef.current;
-          if (el) {
-            el.scrollTop = el.scrollHeight;
-          }
+          if (el) el.scrollTop = el.scrollHeight;
         });
       }
       // Mark as read on new arrival
@@ -268,7 +271,8 @@ const Chat = () => {
   };
 
   const selectRoom = async (room) => {
-    // Prevent scroll flash: mark near bottom so it will scroll to bottom on open
+    // Flag: scroll to bottom once when room opens
+    roomJustOpened.current = true;
     wasNearBottom.current = true;
     prevMsgCount.current = 0;
 
@@ -455,10 +459,14 @@ const Chat = () => {
                 {messages.map((msg, idx) => {
                   const isOwn = msg.senderId === user.uid;
                   const prevMsg = messages[idx - 1];
+                  // Show date divider when > 5 minutes gap OR different day
                   const showTimeDivider = !prevMsg || (
                     msg.createdAt && prevMsg.createdAt &&
                     Math.abs((msg.createdAt?.seconds || 0) - (prevMsg.createdAt?.seconds || 0)) > 300
                   );
+                  // Consecutive messages from same sender (no avatar repeat)
+                  const isConsecutive = prevMsg && prevMsg.senderId === msg.senderId &&
+                    !showTimeDivider;
                   return (
                     <div key={msg.id}>
                       {showTimeDivider && msg.createdAt && (

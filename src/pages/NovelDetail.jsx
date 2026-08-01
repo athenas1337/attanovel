@@ -6,12 +6,12 @@ import {
   Calendar, Tag, ChevronRight, Lock, Clock, Edit,
   FileText, TrendingUp, Star, Zap, BarChart2
 } from 'lucide-react';
-import { getNovel, incrementViews, toggleNovelLike, toggleNovelBookmark, deleteNovel } from '../firebase/novels';
+import { getNovel, incrementViews, toggleNovelLike, toggleNovelBookmark, deleteNovel, rateNovel, getUserRating } from '../firebase/novels';
 import { getChapters } from '../firebase/chapters';
 import { useAuth } from '../context/AuthContext';
 import { addRecentlyViewed } from '../hooks/useRecentlyViewed';
 import { logActivity } from '../firebase/activity';
-import { isDeveloper } from '../firebase/redeem';
+import { isAdmin } from '../firebase/admin';
 import ShareDropdown from '../components/ui/ShareDropdown';
 import toast from 'react-hot-toast';
 import './NovelDetail.css';
@@ -33,6 +33,9 @@ const NovelDetail = ({ onOpenAuth }) => {
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [synopsisExpanded, setSynopsisExpanded] = useState(false);
+  const [userRating, setUserRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
   const likeProcessing = useRef(false);
   const bookmarkProcessing = useRef(false);
 
@@ -44,24 +47,22 @@ const NovelDetail = ({ onOpenAuth }) => {
           getChapters(novelId)
         ]);
         const isAuthor = n && user && n.authorId === user.uid;
+        const userIsAdmin = isAdmin(user);
 
-        // Block if novel is draft and visitor is not the author
-        if (n && n.status === 'draft' && !isAuthor) {
+        // Block if novel is draft and visitor is not the author or admin
+        if (n && n.status === 'draft' && !isAuthor && !userIsAdmin) {
           toast.error('Novel ini masih berupa draft.');
           navigate('/');
           return;
         }
 
         setNovel(n);
-        setChapters(isAuthor ? chs : chs.filter(ch => ch.status === 'published'));
+        // Authors and admins see all chapters; readers only see published
+        setChapters((isAuthor || userIsAdmin) ? chs : chs.filter(ch => ch.status === 'published'));
 
         if (n) {
-          const viewed = sessionStorage.getItem(`viewed_${novelId}`);
-          if (!viewed) {
-            await incrementViews(novelId);
-            sessionStorage.setItem(`viewed_${novelId}`, 'true');
-            n.views = (n.views || 0) + 1;
-          }
+          // Properly track views — 1x per user
+          await incrementViews(novelId, user?.uid || null);
           // Track recently viewed
           addRecentlyViewed(n);
         }
