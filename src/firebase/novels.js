@@ -228,9 +228,8 @@ export const getUserRating = async (novelId, userId) => {
   return snap.exists() ? snap.data().stars : 0;
 };
 
-// Get related novels by same genre (excluding current novel)
+// Get related novels by genre, excluding current
 export const getRelatedNovels = async (genre, excludeId, limitCount = 6) => {
-  if (!genre) return [];
   try {
     const q = query(
       collection(db, 'novels'),
@@ -247,3 +246,4 @@ export const getRelatedNovels = async (genre, excludeId, limitCount = 6) => {
     return [];
   }
 };
+

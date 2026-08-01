@@ -43,6 +43,7 @@ import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import ActivityLog from './pages/ActivityLog';
 import AdminPanel from './pages/AdminPanel';
+import Support from './pages/Support';
 
 import './styles/globals.css';
 
@@ -224,6 +225,13 @@ function AppRoutes() {
             <ProtectedRoute>
               <AdminPanel />
             </ProtectedRoute>
+          </WithLayout>
+        } />
+
+        {/* Support */}
+        <Route path="/support" element={
+          <WithLayout onOpenAuth={openAuth}>
+            <Support />
           </WithLayout>
         } />
 

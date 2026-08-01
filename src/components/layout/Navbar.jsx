@@ -10,6 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import { logoutUser } from '../../firebase/auth';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase/config';
+import NotificationBell from '../ui/NotificationBell';
 import toast from 'react-hot-toast';
 import './Navbar.css';
 
@@ -113,6 +114,8 @@ const Navbar = ({ onOpenAuth }) => {
                   <span className="navbar__chat-badge">{totalUnread > 9 ? '9+' : totalUnread}</span>
                 )}
               </Link>
+              {/* Notification Bell */}
+              <NotificationBell />
               <div className="navbar__profile" onClick={() => setProfileOpen(!profileOpen)}>
                 <div className="navbar__avatar">
                   {userProfile?.avatar
