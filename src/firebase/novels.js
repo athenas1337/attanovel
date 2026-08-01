@@ -227,3 +227,23 @@ export const getUserRating = async (novelId, userId) => {
   const snap = await getDoc(doc(db, 'novels', novelId, 'ratings', userId));
   return snap.exists() ? snap.data().stars : 0;
 };
+
+// Get related novels by same genre (excluding current novel)
+export const getRelatedNovels = async (genre, excludeId, limitCount = 6) => {
+  if (!genre) return [];
+  try {
+    const q = query(
+      collection(db, 'novels'),
+      where('status', '==', 'published'),
+      where('genre', '==', genre),
+      limit(limitCount + 1)
+    );
+    const snap = await getDocs(q);
+    return snap.docs
+      .filter(d => d.id !== excludeId)
+      .slice(0, limitCount)
+      .map(d => ({ id: d.id, ...d.data() }));
+  } catch {
+    return [];
+  }
+};

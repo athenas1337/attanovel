@@ -15,7 +15,8 @@ import {
 } from '../firebase/comments';
 import { useAuth } from '../context/AuthContext';
 import { logActivity } from '../firebase/activity';
-import { isDeveloper } from '../firebase/redeem';
+import { isAdmin } from '../firebase/admin';
+import { setReadingProgress } from '../hooks/useReadingProgress';
 import toast from 'react-hot-toast';
 import './ReadChapter.css';
 
@@ -106,7 +107,7 @@ const CommentItem = ({
   const isOwner = currentUser?.uid === comment.userId;
   const isNovelAuthor = novelAuthorId && comment.userId === novelAuthorId;
   const isViewerAuthor = currentUser?.uid === novelAuthorId;
-  const isDev = isDeveloper();
+  const isAdminUser = isAdmin(currentUser);
 
   const [showReplies, setShowReplies] = useState(false);
   const [replyingTo, setReplyingTo] = useState(false);
@@ -199,13 +200,13 @@ const CommentItem = ({
                 <Shield size={8} /> PENULIS
               </span>
             )}
-            {isDev && (
+            {isAdminUser && (
               <span style={{
                 background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
                 color: '#fff', fontSize: '0.6rem', fontWeight: '700',
                 padding: '1px 6px', borderRadius: '10px',
               }}>
-                DEV
+                ADMIN
               </span>
             )}
           </div>
@@ -214,8 +215,8 @@ const CommentItem = ({
 
         {/* Action buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginLeft: 'auto' }}>
-          {/* Delete: owner, novel author, or dev */}
-          {(isOwner || isViewerAuthor || isDev) && (
+          {/* Delete: owner, novel author, or admin */}
+          {(isOwner || isViewerAuthor || isAdminUser) && (
             <button
               className="read__comment-delete"
               onClick={() => {
@@ -226,8 +227,8 @@ const CommentItem = ({
               <Trash2 size={12} />
             </button>
           )}
-          {/* Report & Hide: for regular readers (not owner, not author) */}
-          {currentUser && !isOwner && !isViewerAuthor && !isDev && (
+          {/* Report & Hide: for regular readers (not owner, not author, not admin) */}
+          {currentUser && !isOwner && !isViewerAuthor && !isAdminUser && (
             <>
               <button
                 onClick={() => setShowReport(true)}
@@ -409,6 +410,12 @@ const ReadChapter = ({ onOpenAuth }) => {
         setChapter(ch || null);
         const cmts = await getComments(novelId, chapterId);
         setComments(cmts);
+        // Save reading progress to localStorage
+        if (ch) {
+          const pubChapters = isAuthor ? chs : chs.filter(c => c.status === 'published');
+          const chIdx = pubChapters.findIndex(c => c.id === chapterId);
+          setReadingProgress(novelId, chapterId, chIdx, pubChapters.length);
+        }
         // Log read activity
         if (user && ch) {
           logActivity(user.uid, 'read', {

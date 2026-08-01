@@ -36,6 +36,7 @@ const NovelDetail = ({ onOpenAuth }) => {
   const [userRating, setUserRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [ratingSubmitting, setRatingSubmitting] = useState(false);
+  const [readingProgress, setReadingProgressState] = useState(null);
   const likeProcessing = useRef(false);
   const bookmarkProcessing = useRef(false);
 
@@ -85,7 +86,39 @@ const NovelDetail = ({ onOpenAuth }) => {
       }
     };
     load();
+    // Load user's rating if logged in
+    if (user) {
+      getUserRating(novelId, user.uid).then(stars => setUserRating(stars));
+    }
+    // Load local reading progress
+    try {
+      const allProgress = JSON.parse(localStorage.getItem('attanovel_reading_progress') || '{}');
+      if (allProgress[novelId]) setReadingProgressState(allProgress[novelId]);
+    } catch {}
   }, [novelId, userProfile, user]);
+
+  const handleRate = async (stars) => {
+    if (!user) { onOpenAuth('login'); return; }
+    if (ratingSubmitting) return;
+    setRatingSubmitting(true);
+    try {
+      await rateNovel(novelId, user.uid, stars);
+      setUserRating(stars);
+      // Update local novel rating display
+      setNovel(n => {
+        const oldTotal = (n.ratingTotal || 0);
+        const oldCount = (n.ratingCount || 0);
+        const newCount = userRating === 0 ? oldCount + 1 : oldCount;
+        const newTotal = userRating === 0 ? oldTotal + stars : oldTotal - userRating + stars;
+        return { ...n, rating: newCount > 0 ? newTotal / newCount : stars, ratingCount: newCount, ratingTotal: newTotal };
+      });
+      toast.success(`Memberi ${stars} bintang ⭐`);
+    } catch (e) {
+      toast.error('Gagal memberi rating.');
+    } finally {
+      setRatingSubmitting(false);
+    }
+  };
 
   const handleLike = async () => {
     if (!user) { onOpenAuth('login'); return; }
@@ -247,6 +280,42 @@ const NovelDetail = ({ onOpenAuth }) => {
               )}
             </div>
 
+            {/* ⭐ Star Rating Widget */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '10px 0 4px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: 3 }}>
+                {[1,2,3,4,5].map(star => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => handleRate(star)}
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    disabled={ratingSubmitting}
+                    style={{
+                      background: 'none', border: 'none', cursor: user ? 'pointer' : 'default', padding: '2px',
+                      transition: 'transform 0.1s',
+                      transform: hoverRating >= star ? 'scale(1.2)' : 'scale(1)',
+                    }}
+                    title={user ? `Beri ${star} bintang` : 'Login untuk memberi rating'}
+                  >
+                    <Star
+                      size={20}
+                      fill={(hoverRating || userRating) >= star ? '#f59e0b' : 'none'}
+                      color={(hoverRating || userRating) >= star ? '#f59e0b' : 'rgba(255,255,255,0.3)'}
+                    />
+                  </button>
+                ))}
+              </div>
+              {novel.rating > 0 && (
+                <span style={{ fontSize: '0.82rem', color: 'var(--color-text-muted)' }}>
+                  {novel.rating.toFixed(1)} ⭐ ({novel.ratingCount || 0} penilaian)
+                </span>
+              )}
+              {userRating > 0 && (
+                <span style={{ fontSize: '0.75rem', color: '#f59e0b' }}>· Penilaianmu: {userRating}★</span>
+              )}
+            </div>
+
             {/* Tags */}
             {novel.tags?.length > 0 && (
               <div className="novel-detail__tags">
@@ -258,14 +327,25 @@ const NovelDetail = ({ onOpenAuth }) => {
               </div>
             )}
 
-            {/* Action Buttons */}
+              {/* Action Buttons */}
             <div className="novel-detail__actions">
+              {/* Continue Reading (if progress exists) */}
+              {readingProgress?.lastChapterId && publishedChapters.length > 0 && (
+                <button
+                  className="btn btn-primary btn-lg"
+                  onClick={() => navigate(`/novel/${novelId}/chapter/${readingProgress.lastChapterId}`)}
+                  title={`Lanjut bab ${readingProgress.lastChapterIndex + 1} dari ${readingProgress.totalChapters}`}
+                >
+                  <BookOpen size={18} /> Lanjutkan ({readingProgress.percent}%)
+                </button>
+              )}
+              {/* Start Reading */}
               {publishedChapters.length > 0 && (
                 <button
-                  className="btn btn-gold btn-lg"
+                  className={`btn btn-lg ${readingProgress ? 'btn-outline' : 'btn-gold'}`}
                   onClick={() => navigate(`/novel/${novelId}/chapter/${publishedChapters[0].id}`)}
                 >
-                  <BookOpen size={18} /> Mulai Baca
+                  <BookOpen size={18} /> {readingProgress ? 'Baca Ulang' : 'Mulai Baca'}
                 </button>
               )}
               <button
@@ -292,24 +372,24 @@ const NovelDetail = ({ onOpenAuth }) => {
                   <Edit size={16} /> Edit Novel
                 </Link>
               )}
-              {/* Developer Mode: Force Delete any novel */}
-              {isDeveloper() && !isAuthor && (
+              {/* Admin Mode: Force Delete any novel */}
+              {isAdmin(user) && !isAuthor && (
                 <button
                   className="btn btn-sm"
                   style={{ background: '#ef4444', color: '#fff', border: 'none', opacity: 0.85 }}
                   onClick={async () => {
-                    if (!confirm(`[DEV] Hapus paksa novel "${novel.title}"?`)) return;
+                    if (!confirm(`[ADMIN] Hapus novel "${novel.title}"?`)) return;
                     try {
                       await deleteNovel(novelId);
-                      toast.success('[DEV] Novel berhasil dihapus secara paksa.');
+                      toast.success('[Admin] Novel berhasil dihapus.');
                       navigate('/');
                     } catch (e) {
                       toast.error('Gagal menghapus: ' + e.message);
                     }
                   }}
-                  title="[Developer] Force Delete Novel"
+                  title="[Admin] Force Delete Novel"
                 >
-                  🔧 DEV DELETE
+                  👑 ADMIN DELETE
                 </button>
               )}
             </div>
@@ -499,6 +579,54 @@ const NovelDetail = ({ onOpenAuth }) => {
             <span>Made with ❤️ by <strong>Atha</strong></span>
           </div>
         </aside>
+      </div>
+
+      {/* Related Novels Section */}
+      <RelatedNovels novelId={novelId} genre={novel?.genre} />
+    </div>
+  );
+};
+
+// ── Related Novels Widget ──────────────────────────────────────────────────
+import { getRelatedNovels } from '../firebase/novels';
+const RelatedNovels = ({ novelId, genre }) => {
+  const navigate = useNavigate();
+  const [related, setRelated] = useState([]);
+
+  useEffect(() => {
+    if (!genre) return;
+    getRelatedNovels(genre, novelId, 6).then(setRelated);
+  }, [genre, novelId]);
+
+  if (related.length === 0) return null;
+
+  return (
+    <div className="container" style={{ paddingBottom: '3rem' }}>
+      <h2 style={{ fontSize: '1.2rem', fontWeight: '800', marginBottom: '1.2rem', display: 'flex', alignItems: 'center', gap: 8 }}>
+        📚 Novel Serupa
+      </h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 14 }}>
+        {related.map(novel => (
+          <div
+            key={novel.id}
+            onClick={() => navigate(`/novel/${novel.id}`)}
+            style={{ cursor: 'pointer', borderRadius: 12, overflow: 'hidden', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', transition: 'transform 0.2s' }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-4px)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div style={{ aspectRatio: '2/3', overflow: 'hidden', background: '#1a1030' }}>
+              {novel.cover
+                ? <img src={novel.cover} alt={novel.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem' }}>📖</div>
+              }
+            </div>
+            <div style={{ padding: '8px 10px' }}>
+              <h4 style={{ margin: 0, fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: '#ede9fe' }}>{novel.title}</h4>
+              <p style={{ margin: '2px 0 0', fontSize: '0.7rem', color: '#7c6fa0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{novel.authorName || 'Anonim'}</p>
+              <p style={{ margin: '4px 0 0', fontSize: '0.68rem', color: '#f59e0b' }}>⭐ {novel.rating ? novel.rating.toFixed(1) : '—'} · 👁 {(novel.views||0).toLocaleString()}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
